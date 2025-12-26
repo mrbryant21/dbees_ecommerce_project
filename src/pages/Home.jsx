@@ -1,13 +1,6 @@
 import homePageMother from "../assets/home_page_mother.jpg";
-import {
-  ShoppingCart,
-  Heart,
-  Search,
-  Menu,
-  User,
-  ChevronRight,
-  Star,
-} from "lucide-react";
+import { Heart, Search, Menu, User, ChevronRight, Star } from "lucide-react";
+import CartButton from "../components/CartButton";
 const Home = () => {
   const categories = [
     { name: "Newborn Essentials", icon: "👶" },
@@ -23,9 +16,9 @@ const Home = () => {
       id: 1,
       name: "Organic Cotton Onesie Set",
       price: "$24.99",
-      image:
-        "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=600&q=80",
+      image: "/images/organic-cotton.jpg",
       rating: 4.9,
+      reviews: "(120)",
       badge: "Best Seller",
     },
     {
@@ -35,27 +28,55 @@ const Home = () => {
       image:
         "https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?w=600&q=80",
       rating: 4.7,
+      reviews: "(85)",
       badge: "New Arrival",
     },
     {
       id: 3,
       name: "Soft Knit Baby Blanket",
       price: "$32.00",
-      image:
-        "https://images.unsplash.com/photo-1519689680058-324335c77eba?w=600&q=80",
+      image: "/images/soft_knit_baby_blanket.jpg",
       rating: 4.8,
+      reviews: "(200)",
       badge: "Sale",
     },
     {
       id: 4,
       name: "Silicone Feeding Set",
       price: "$18.99",
-      image:
-        "https://images.unsplash.com/photo-1584143990836-2d1f99696377?w=600&q=80",
+      image: "/images/silicon_feeding_set.jpg",
       rating: 4.6,
+      reviews: "(65)",
       badge: null,
     },
   ];
+
+  const ShopCategories = [
+    {
+      name: "Newborn Essentials",
+      image: "/cat_images/newborn_essentials.png",
+    },
+    {
+      name: "Clothing",
+      image: "/cat_images/clothing.jpg",
+    },
+    {
+      name: "Toys & Play",
+      image: "/cat_images/toys_play.jpg",
+    },
+    {
+      name: "Nursery Decor",
+      image: "../assets/logo.png",
+    },
+    {
+      name: "Feeding & Care",
+      image: "../assets/logo.png",
+    }, 
+    {
+      name: "Bath & Skincare",
+      image: "../assets/logo.png",
+    }
+  ]
 
   return (
     <div className="animate-fadeIn">
@@ -130,7 +151,7 @@ const Home = () => {
       </section>
 
       {/* Featured Products Section */}
-      <section className="featured-products-section py-16">
+      <section className="featured-products-section py-16 bg-linear-to-t from-babyBlue/50 to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-4 lg:px-8">
           <div className="flex justify-between items-center mb-12">
             <div>
@@ -154,15 +175,22 @@ const Home = () => {
                 className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all transform hover:transalte-y-1 cursor-pointer group"
                 key={product.id}
               >
-                <div className="relative bg-linear-to-r from-babyPink to-babyBlue p-8 flex items-center justify-center h-64">
-                  <div>{product.image}</div>
+                <div className="relative bg-linear-to-r from-babyPink to-babyBlue flex items-center justify-center h-64">
+                  <img
+                    className="w-full h-full object-cover"
+                    src={product.image}
+                    alt={product.name}
+                  />
                   {product.badge && (
                     <span className="absolute top-4 left-4 bg-pink-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
                       {product.badge}
                     </span>
                   )}
                   <button className="absolute top-4 left-4 p-2 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Heart size={16} className="text-pink-500 hover:cursor-pointer" />
+                    <Heart
+                      size={16}
+                      className="text-pink-500 hover:cursor-pointer"
+                    />
                   </button>
                 </div>
                 <div className="p-5">
@@ -187,9 +215,7 @@ const Home = () => {
                     <span className="text-2xl font-bold text-red-600">
                       {product.price}
                     </span>
-                    <button className="bg-nurseryGreen hover:bg-[#B5D9B7] text-gray-800 px-4 py-2 rounded-full text-sm transition-all cursor-pointer">
-                      Add to Cart
-                    </button>
+                    <CartButton />
                   </div>
                 </div>
               </div>
@@ -197,26 +223,34 @@ const Home = () => {
           </div>
         </div>
       </section>
+
       {/* Category Selection Placeholder */}
-      <section className="py-16 container mx-auto px-4">
-        <h2 className="text-2xl font-semibold mb-8">Shop by Category</h2>
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-          {["Clothing", "Toys", "Nursery", "Feeding", "Baby", "Bath"].map(
-            (cat) => (
+      <section className="py-16 mx-auto px-4 bg-linear-to-t from-white to-babyBlue/50">
+        <div className="max-w-7xl px-4 sm:px-4 mx-auto lg:px-8">
+          <h2 className="text-2xl font-semibold mb-8">Shop by Category</h2>
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+            {ShopCategories.map((category) => (
               <div
-                key={cat}
-                className="h-40 rounded-2xl flex items-center justify-center cursor-pointer transition"
+                className="group relative h-64 rounded-2xl overflow-hidden cursor-pointer p-6 flex flex-col items-center justify-center"
+                key={category.name}
               >
-                <img src="../assets/logo.png" alt="" />
-                <span className="font-medium">{cat}</span>
+                <img
+                  src={category.image}
+                  alt={category.name}
+                  className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500 rounded-2xl"
+                />
+                <span className="font-semibold text-medium text-gray-700 mt-4">
+                  {category.name}
+                </span>
               </div>
-            ),
-          )}
+            ))}
+          </div>
         </div>
       </section>
-
       {/* Trust & Safety Banners Section */}
-      <section className="bg-babyBlue px-6 py-20 mx-auto"></section>
+      
+      {/* <section className="bg-babyBlue px-6 py-20 mx-auto"></section> */}
+      
     </div>
   );
 };
