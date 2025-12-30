@@ -56,7 +56,7 @@ const NewArrivalsProducts = () => {
           </div>
           <a
             href="#"
-            className="group inline-flex items-center gap-2 px-6 py-3 bg-[#fce7f3] text-pink-700 font-semibold rounded-full hover:bg-[#e0f2fe] hover:text-blue-700 transition-all duration-300"
+            className="group inline-flex items-center gap-2 px-6 py-3 bg-babyPink text-pink-700 font-semibold rounded-full hover:bg-babyBlue hover:text-blue-700 transition-all duration-300"
           >
             View All Products
             {/* The arrow moves slightly to the right on hover */}
