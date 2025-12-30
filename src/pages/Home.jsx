@@ -1,6 +1,12 @@
-import homePageMother from "../assets/home_page_mother.jpg";
 import { Heart, Search, Menu, User, ChevronRight, Star } from "lucide-react";
 import CartButton from "../components/CartButton";
+import CategoriesSelection from "../components/ShopCategories";
+import TrendingProducts from "../components/TrendingProducts";
+import TrustSection from "../components/TrustSection";
+import Footer from "../components/Footer";
+import NewArrivalsBanners from "../components/NewArrivalsBanners";
+import TestimonialCarousel from "../components/Testimonials";
+
 const Home = () => {
   const categories = [
     { name: "Newborn Essentials", icon: "👶" },
@@ -58,23 +64,23 @@ const Home = () => {
     },
     {
       name: "Clothing",
-      image: "/cat_images/clothing.jpg",
+      image: "/cat_images/baby_clothing.jpeg",
     },
     {
       name: "Toys & Play",
-      image: "/cat_images/toys_play.jpg",
+      image: "/cat_images/toys_and_play.png",
     },
     {
       name: "Nursery Decor",
-      image: "../assets/logo.png",
+      image: "/cat_images/nursery_decor.png",
     },
     {
       name: "Feeding & Care",
-      image: "../assets/logo.png",
+      image: "/cat_images/feeding_and_care.png",
     }, 
     {
       name: "Bath & Skincare",
-      image: "../assets/logo.png",
+      image: "/cat_images/baby_and_skincare.png",
     }
   ]
 
@@ -106,15 +112,15 @@ const Home = () => {
               </div>
             </aside>
 
-            {/* Featured Products Grid */}
+            {/* Featured banners Grid */}
             <div className="flex-1">
-              <div className="grid grid-cols-3 gap-4 h-full">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full">
                 {/* Large Featured Card */}
                 <div className="col-span-2 row-span-2 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition cursor-pointer group relative">
                   <div
                     className="absolute inset-0 bg-cover bg-center group-hover:scale-105 transition-transform duration-500"
                     style={{
-                      backgroundImage: `url(${homePageMother})`,
+                      backgroundImage: "url('/images/homepage_banner_1.png')",
                     }}
                   />
 
@@ -129,7 +135,7 @@ const Home = () => {
                     className="absolute inset-0 bg-cover bg-center group-hover:scale-105 transition-transform duration-500"
                     style={{
                       backgroundImage:
-                        "url('https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=600&q=80')",
+                        "url('/images/homepage_banner_3.png')",
                     }}
                   />
                 </div>
@@ -169,7 +175,7 @@ const Home = () => {
               View All Products
             </a>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {featuredProducts.map((product) => (
               <div
                 className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all transform hover:transalte-y-1 cursor-pointer group"
@@ -224,33 +230,34 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Category Selection Placeholder */}
-      <section className="py-16 mx-auto px-4 bg-linear-to-t from-white to-babyBlue/50">
-        <div className="max-w-7xl px-4 sm:px-4 mx-auto lg:px-8">
-          <h2 className="text-2xl font-semibold mb-8">Shop by Category</h2>
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-            {ShopCategories.map((category) => (
-              <div
-                className="group relative h-64 rounded-2xl overflow-hidden cursor-pointer p-6 flex flex-col items-center justify-center"
-                key={category.name}
-              >
-                <img
-                  src={category.image}
-                  alt={category.name}
-                  className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500 rounded-2xl"
-                />
-                <span className="font-semibold text-medium text-gray-700 mt-4">
-                  {category.name}
-                </span>
-              </div>
-            ))}
+      <CategoriesSelection />
+
+      <NewArrivalsBanners />
+
+      <TrendingProducts />
+      {/* Trust & Safety Banners Section */}
+
+      {/* Promo Banner Section */}
+      <section>
+        <div className="w-full mx-auto">
+          <div className="flex flex-col-1 items-center justify-center">
+            <a href="">
+              <img
+                className="w-full h-full object-cover"
+                src="/images/promo_banner.png"
+                alt="Promotional Banner"
+              />
+            </a>
           </div>
         </div>
       </section>
-      {/* Trust & Safety Banners Section */}
-      
+
+      <TrustSection />
+
+      <TestimonialCarousel />
       {/* <section className="bg-babyBlue px-6 py-20 mx-auto"></section> */}
-      
+
+      <Footer />
     </div>
   );
 };

@@ -18,6 +18,7 @@ function App() {
             <Route path="/shop" element={<Shop />} />
             <Route path="/shop/:productId" element={<ProductDetails />} />
             <Route path="*" element={<Error404 />} />
+            {/* <Route path="/checkout" element={<Checkout/> } /> */}
           </Routes>
         </main>
       </div>
