@@ -1,5 +1,5 @@
 import React from "react";
-import { Heart, Search, Menu, User, ChevronRight, Star } from "lucide-react";
+import { Heart, Search, Menu, User, ChevronRight, Star, ArrowRight } from "lucide-react";
 import CartButton from "./CartButton";
 
 
@@ -46,7 +46,7 @@ const TrendingProducts = () => {
     return (
       <section className="featured-products-section py-16 bg-linear-to-t from-babyBlue/50 to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-4 lg:px-8">
-          <div className="flex justify-between items-center mb-12">
+          <div className="flex flex-col gap-4 justify-between items-center mb-12 md:flex-row md:gap-6 md:items-center">
             <div>
               <h2 className="text-4xl font-bold text-pink-500 mb-4">
                 Trending Products & Best Sellers
@@ -56,10 +56,15 @@ const TrendingProducts = () => {
               </p>
             </div>
             <a
-              href=""
-              className="text-gray-600 font-medium after:content-['_→'] after:ml-2 hover:text-pink-500 transition text-sm"
+              href="#"
+              className="group inline-flex items-center gap-2 px-6 py-3 bg-[#fce7f3] text-pink-700 font-semibold rounded-full hover:bg-[#e0f2fe] hover:text-blue-700 transition-all duration-300"
             >
               View All Products
+              {/* The arrow moves slightly to the right on hover */}
+              <ArrowRight
+                size={18}
+                className="group-hover:translate-x-1 transition-transform"
+              />
             </a>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
