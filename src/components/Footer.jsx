@@ -46,9 +46,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
           {/* Brand Column */}
           <div className="space-y-4">
-            <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-              <span className="text-[#fce7f3]">Baby</span>Shop
-            </h2>
+            <img src="/images/logo.png" alt="" />
             <p className="text-sm text-gray-400 leading-relaxed">
               Curating the finest essentials for your little ones. Quality,
               safety, and style in every package we deliver.

@@ -1,6 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import Logo from "../assets/logo.png"; // Ensure this path is correct
 import {
   ShoppingBag,
   User,
@@ -17,6 +16,20 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [activeMenu, setActiveMenu] = useState(null); // Tracks which menu is open
+  const [mobileSubMenu, setMobileSubMenu] = useState(null); // Tracks which mobile sub-menu is open
+
+  // Close dropdowns when clicking outside
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen]);
 
   // Dummy data for cart/wishlist
   const [cartCount] = useState(3);
@@ -35,8 +48,7 @@ const Navbar = () => {
         "Bottoms",
         "Outerwear",
       ],
-      image:
-        "/images/baby_clothing.webp",
+      image: "/images/baby_clothing.webp",
       color: "bg-blue-100",
     },
     Toys: {
@@ -61,8 +73,7 @@ const Navbar = () => {
         "Lighting",
         "Nursing Chairs",
       ],
-      image:
-        "/images/baby_nursery.jpg",
+      image: "/images/baby_nursery.jpg",
       color: "bg-green-100",
     },
     Feeding: {
@@ -74,8 +85,7 @@ const Navbar = () => {
         "Toddler Utensils",
         "Food Processors",
       ],
-      image:
-        "/images/baby_feeding.webp",
+      image: "/images/baby_feeding.webp",
       color: "bg-orange-100",
     },
     "Maternity Wear": {
@@ -128,13 +138,7 @@ const Navbar = () => {
           <div className="shrink-0 flex items-center gap-2">
             <Link to="/" className="flex items-center gap-2 group">
               {/* Replace with your actual Logo */}
-              <img className="max-h-12" src={Logo} alt="Logo" />
-              {/* Fallback text if logo image fails */}
-              {!Logo && (
-                <span className="text-2xl font-bold text-pink-500">
-                  BabyShop
-                </span>
-              )}
+              <img className="max-h-12" src="/images/logo.png" alt="Logo" />
             </Link>
           </div>
 
@@ -351,30 +355,196 @@ const Navbar = () => {
         )}
       </div>
 
-      {/* Mobile Menu (Simplified for mobile, no Mega Menu logic usually needed here) */}
-      {isOpen && (
-        <div className="md:hidden bg-white border-t border-slate-100 shadow-lg h-screen overflow-y-auto pb-20">
-          <div className="px-4 py-4 space-y-1">
-            {Object.keys(navigationData).map((cat) => (
-              <Link
-                key={cat}
-                to={`/shop/${cat.toLowerCase()}`}
-                className="flex items-center justify-between px-4 py-3 text-slate-700 font-medium hover:bg-pink-50 hover:text-pink-500 rounded-lg transition"
-                onClick={() => setIsOpen(false)}
-              >
-                {cat}
-              </Link>
-            ))}
+      {/* Mobile Menu Overlay */}
+      <div
+        className={`fixed inset-0 bg-black/50 z-40 transition-opacity duration-300 lg:hidden ${
+          isOpen ? "opacity-100 visible" : "opacity-0 invisible"
+        }`}
+        onClick={() => setIsOpen(false)}
+      />
+
+      {/* Mobile Menu Sidebar */}
+      <div
+        className={`fixed top-0 left-0 w-[85%] max-w-sm h-full bg-white z-50 shadow-2xl transition-transform duration-300 ease-out lg:hidden flex flex-col ${
+          isOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        {/* Mobile Menu Header */}
+        <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-white sticky top-0 z-10">
+          <Link to="/" onClick={() => setIsOpen(false)}>
+            <img className="h-10" src="/images/logo.png" alt="Logo" />
+          </Link>
+          <button
+            onClick={() => setIsOpen(false)}
+            className="p-2 text-slate-400 hover:text-pink-500 transition"
+          >
+            <X size={24} />
+          </button>
+        </div>
+
+        {/* Mobile Menu Content */}
+        <div className="flex-1 overflow-y-auto py-4">
+          <div className="px-4 space-y-1">
+            {/* New Arrivals */}
             <Link
-              to="/shop/sale"
-              className="flex items-center justify-between px-4 py-3 text-red-500 font-bold hover:bg-red-50 rounded-lg transition"
+              to="/shop/new"
+              className="flex items-center gap-3 px-4 py-4 text-slate-700 font-bold hover:bg-pink-50 rounded-xl transition"
               onClick={() => setIsOpen(false)}
             >
-              Sale
+              <Sparkles size={18} className="text-yellow-400" />
+              New Arrivals
+            </Link>
+
+            {/* Dynamic Categories */}
+            {Object.keys(navigationData).map((cat) => (
+              <div key={cat} className="space-y-1">
+                <button
+                  onClick={() =>
+                    setMobileSubMenu(mobileSubMenu === cat ? null : cat)
+                  }
+                  className={`w-full flex items-center justify-between px-4 py-4 rounded-xl transition-all ${
+                    mobileSubMenu === cat
+                      ? "bg-pink-50 text-pink-600 font-bold"
+                      : "text-slate-700 font-semibold hover:bg-slate-50"
+                  }`}
+                >
+                  <span>{cat}</span>
+                  <ChevronRight
+                    size={18}
+                    className={`transition-transform duration-300 ${
+                      mobileSubMenu === cat ? "rotate-90" : ""
+                    }`}
+                  />
+                </button>
+
+                {/* Sub-menu Accordion */}
+                <div
+                  className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                    mobileSubMenu === cat
+                      ? "max-h-[1000px] opacity-100"
+                      : "max-h-0 opacity-0"
+                  }`}
+                >
+                  <div className="pl-6 pr-4 py-2 space-y-4 border-l-2 border-pink-100 ml-6 my-2">
+                    {/* Subcategories */}
+                    <div>
+                      <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">
+                        Categories
+                      </h4>
+                      <div className="grid grid-cols-1 gap-2">
+                        {navigationData[cat].categories.map((sub) => (
+                          <Link
+                            key={sub}
+                            to={`/shop/${cat.toLowerCase()}/${sub.toLowerCase().replace(/ /g, "-")}`}
+                            className="text-sm text-slate-600 hover:text-pink-500 py-1 block"
+                            onClick={() => setIsOpen(false)}
+                          >
+                            {sub}
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Gender/Age Quick Links */}
+                    <div className="grid grid-cols-2 gap-4 pt-2">
+                      <div>
+                        <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">
+                          Gender
+                        </h4>
+                        {genders.slice(0, 2).map((g) => (
+                          <Link
+                            key={g}
+                            to="#"
+                            className="text-xs text-slate-500 hover:text-pink-500 py-1 block"
+                            onClick={() => setIsOpen(false)}
+                          >
+                            {g}
+                          </Link>
+                        ))}
+                      </div>
+                      <div>
+                        <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">
+                          Age
+                        </h4>
+                        {ages.slice(0, 2).map((a) => (
+                          <Link
+                            key={a}
+                            to="#"
+                            className="text-xs text-slate-500 hover:text-pink-500 py-1 block"
+                            onClick={() => setIsOpen(false)}
+                          >
+                            {a}
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+
+                    <Link
+                      to={`/shop/${cat.toLowerCase()}`}
+                      className="text-pink-500 font-bold text-xs flex items-center gap-1 pt-2"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      View All {cat}
+                      <ChevronRight size={12} />
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {/* Sale */}
+            <Link
+              to="/shop/sale"
+              className="flex items-center justify-between px-4 py-4 text-red-500 font-bold hover:bg-red-50 rounded-xl transition"
+              onClick={() => setIsOpen(false)}
+            >
+              <span>Sale</span>
+              <span className="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full">
+                50% Off
+              </span>
             </Link>
           </div>
         </div>
-      )}
+
+        {/* Mobile Menu Footer */}
+        <div className="p-6 border-t border-slate-100 bg-slate-50">
+          <div className="flex items-center gap-4 mb-6">
+            <div className="w-12 h-12 rounded-full bg-pink-100 flex items-center justify-center text-pink-600">
+              <User size={24} />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-slate-900">
+                Welcome to D'Bees
+              </p>
+              <Link
+                to="/login"
+                className="text-xs text-pink-500 font-semibold hover:underline"
+                onClick={() => setIsOpen(false)}
+              >
+                Login or Register
+              </Link>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Link
+              to="/wishlist"
+              className="flex items-center justify-center gap-2 py-3 px-4 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 hover:border-pink-200 transition"
+              onClick={() => setIsOpen(false)}
+            >
+              <Heart size={18} />
+              Wishlist
+            </Link>
+            <Link
+              to="/cart"
+              className="flex items-center justify-center gap-2 py-3 px-4 bg-pink-500 rounded-xl text-sm font-bold text-white shadow-lg shadow-pink-100 hover:bg-pink-600 transition"
+              onClick={() => setIsOpen(false)}
+            >
+              <ShoppingBag size={18} />
+              Cart
+            </Link>
+          </div>
+        </div>
+      </div>
     </nav>
   );
 };

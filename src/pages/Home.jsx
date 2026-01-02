@@ -105,11 +105,11 @@ const Home = () => {
   return (
     <div className="animate-fadeIn">
       {/* Hero Section with Categories & Featured Grid */}
-      <section>
+      <section className="pt-8 md:pt-0">
         <div className="container mx-auto px-4 py-8">
           <div className="flex gap-6">
             {/* Categories Sidebar */}
-            <aside className="w-64 shrink-0">
+            <aside className="w-64 shrink-0 hidden md:block">
               <div className="bg-white rounded-2xl shadow-sm p-4">
                 <h3 className="text-lg font-semibold mb-4 text-slate-800">
                   Shop by Category
@@ -132,7 +132,7 @@ const Home = () => {
 
             {/* Featured banners Grid */}
             <div className="flex-1">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-100 md:h-full">
                 {/* Large Featured Card */}
                 <div className="col-span-2 row-span-2 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition cursor-pointer group relative">
                   <div
@@ -186,7 +186,7 @@ const Home = () => {
               </p>
             </div>
             <a
-              href="/Shop"
+              href="/shop"
               className="group inline-flex items-center gap-2 px-6 py-3 bg-babyPink text-pink-700 font-semibold rounded-full hover:bg-babyBlue hover:text-blue-700 transition-all duration-300"
             >
               View All Products
