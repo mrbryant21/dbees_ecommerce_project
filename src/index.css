@@ -25,7 +25,12 @@ h5,
 h6 {
   font-family: "Playfair Display", serif;
 }
-p, a, span, li, div, button {
+p,
+a,
+span,
+li,
+div,
+button {
   font-family: "Poppins", sans-serif;
 }
 @layer base {
@@ -52,4 +57,37 @@ main {
 
 .animate-fadeIn {
   animation: fadeIn 0.3s ease-out forwards;
+}
+
+/* Custom styling for the Price Range Slider */
+/* --- Price Range Slider Styling --- */
+
+/* The inputs are invisible but clickable */
+.thumb {
+  pointer-events: none;
+  @apply absolute w-full -top-1 h-2 cursor-pointer;
+  -webkit-appearance: none;
+}
+
+/* The Draggable Circle (Chrome, Safari, Edge) */
+.thumb::-webkit-slider-thumb {
+  pointer-events: auto;
+  -webkit-appearance: none;
+  @apply w-5 h-5 rounded-full bg-white border-2 border-pink-500 cursor-pointer shadow-md;
+}
+
+/* Hover Effect */
+.thumb::-webkit-slider-thumb:hover {
+  @apply bg-pink-50;
+}
+
+/* Firefox Support */
+.thumb::-moz-range-thumb {
+  pointer-events: auto;
+  border: none;
+  @apply w-5 h-5 rounded-full bg-white border-2 border-pink-500 cursor-pointer shadow-md;
+}
+
+.thumb::-moz-range-thumb:hover {
+  @apply bg-pink-50;
 }

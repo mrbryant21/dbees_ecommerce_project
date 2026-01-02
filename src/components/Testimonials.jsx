@@ -32,7 +32,7 @@ const testimonials = [
     image:
       "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&q=80",
   },
-  {
+  { 
     id: 4,
     name: "Jessica Wu",
     role: "Toddler Mom",
