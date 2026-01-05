@@ -18,6 +18,9 @@ import ResetPassword from "./pages/auth/ResetPassword.jsx";
 import TermsOfService from "./pages/TermsOfService.jsx";
 import PrivacyPolicy from "./pages/PrivacyPolicy.jsx";
 import CookiePolicy from "./pages/CookiePolicy.jsx";
+import AboutUs from "./pages/AboutUs";
+import FAQ from "./pages/FAQ";
+import SizeGuide from "./pages/SizeGuide"
 
 function App() {
   return (
@@ -45,6 +48,9 @@ function App() {
             <Route path="/terms-of-service" element={<TermsOfService />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/cookie-policy" element={<CookiePolicy />} />
+            <Route path="/about-us" element={<AboutUs />} />
+            <Route path="/faq" element={<FAQ />} />
+            <Route path="/size-guide" element={<SizeGuide />} /> 
           </Routes>
         </main>
       </div>

@@ -9,7 +9,7 @@ import {
   ToggleRight, 
   ToggleLeft
 } from "lucide-react";
-import Footer from ""
+import Footer from "../components/Footer";
 
 const CookiePolicy = () => {
   const [activeSection, setActiveSection] = useState("what-are-cookies");

@@ -275,9 +275,9 @@ const ProductDetails = () => {
                     <span className="text-sm font-bold text-gray-900 uppercase tracking-wide">
                       Select Size
                     </span>
-                    <button className="text-xs text-gray-500 underline hover:text-pink-500">
+                    <a href="/size-guide" className="text-xs text-gray-500 underline hover:text-pink-500">
                       Size Guide
-                    </button>
+                    </a>
                   </div>
                   <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
                     {productData.sizes.map((size) => (
@@ -341,7 +341,7 @@ const ProductDetails = () => {
           <div className="flex flex-wrap gap-8 border-b border-gray-100">
             {[
               { id: "details", label: "Product Details" },
-              { id: "reviews", label: `Reviews (${product.reviews})` },
+              { id: "reviews", label: `Reviews (${products.reviews})` },
               { id: "manufacturer", label: "Manufactured By" },
               { id: "shipping", label: "Shipping & Returns" },
             ].map((tab) => (

@@ -62,11 +62,13 @@ const Footer = () => {
           <div>
             <h4 className="text-white font-semibold mb-6">Shop Categories</h4>
             <ul className="space-y-3">
-              <FooterLink text="Strollers & Prams" />
-              <FooterLink text="Nursery Furniture" />
-              <FooterLink text="Baby Clothing" />
-              <FooterLink text="Feeding & Nursing" />
-              <FooterLink text="Toys & Learning" />
+              <FooterLink text="Newborn Essentials" />
+              <FooterLink text="Clothing" />
+              <FooterLink text="Toys" />
+              <FooterLink text="Feeding" />
+              <FooterLink text="Bath & Skincare" />
+              <FooterLink text="Maternity Wear" />
+              <FooterLink text="New Arrivals" />
             </ul>
           </div>
 
@@ -74,9 +76,10 @@ const Footer = () => {
           <div>
             <h4 className="text-white font-semibold mb-6">Support</h4>
             <ul className="space-y-3">
-              <FooterLink text="Track Order" />
+              <FooterLink text="About Us" />
+              <FooterLink text="Privacy Policy" />
               <FooterLink text="Returns & Exchanges" />
-              <FooterLink text="Shipping Info" />
+              <FooterLink text="Terms of Service" />
               <FooterLink text="Size Guide" />
               <FooterLink text="FAQs" />
             </ul>
@@ -123,7 +126,7 @@ const Footer = () => {
                 Terms of Service
               </a>
               <a href="#" className="hover:text-white transition-colors">
-                Cookie Policy 
+                Cookie Policy
               </a>
             </div>
             <div className="flex items-center gap-1">
@@ -144,7 +147,7 @@ const Footer = () => {
 const FooterLink = ({ text }) => (
   <li>
     <a
-      href="#"
+      href="/privacy-policy"
       className="text-sm hover:text-babyBlue hover:pl-1 transition-all duration-200"
     >
       {text}
