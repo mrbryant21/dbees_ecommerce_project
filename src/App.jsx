@@ -21,6 +21,8 @@ import CookiePolicy from "./pages/CookiePolicy.jsx";
 import AboutUs from "./pages/AboutUs";
 import FAQ from "./pages/FAQ";
 import SizeGuide from "./pages/SizeGuide"
+import Wishlist from "./pages/Wishlist";
+import Returns from "./pages/Returns";
 
 function App() {
   return (
@@ -41,6 +43,7 @@ function App() {
             <Route path="/auth" element={<UserAuth />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/profile" element={<UserProfile />} />
+            <Route path="/wishlist" element={<Wishlist />} />
             <Route path="*" element={<Error404 />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             {/* <Route path="/checkout" element={<Checkout/> } /> */}
@@ -51,11 +54,13 @@ function App() {
             <Route path="/about-us" element={<AboutUs />} />
             <Route path="/faq" element={<FAQ />} />
             <Route path="/size-guide" element={<SizeGuide />} /> 
+            <Route path="/returns" element={<Returns />} />
           </Routes>
         </main>
       </div>
     </Router>
   );
 }
+
 
 export default App;

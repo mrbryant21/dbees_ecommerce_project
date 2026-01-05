@@ -118,22 +118,37 @@ const Footer = () => {
               &copy; {new Date().getFullYear()} DBees BabyShop. All rights
               reserved.
             </p>
-            <div className="flex gap-6">
-              <a href="#" className="hover:text-white transition-colors">
-                Privacy Policy
-              </a>
-              <a href="#" className="hover:text-white transition-colors">
-                Terms of Service
-              </a>
-              <a href="#" className="hover:text-white transition-colors">
-                Cookie Policy
-              </a>
+            <div className="flex items-center gap-4 transition-all duration-300">
+              <img
+                src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg"
+                alt="Visa"
+                className="h-8"
+              />
+              <img
+                src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg"
+                alt="Mastercard"
+                className="h-8"
+              />
+              <img
+                src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg"
+                alt="PayPal"
+                className="h-8"
+              />
+              <img
+                src="/images/Google_Pay_Logo.svg"
+                alt="Google Pay"
+                className="h-8"
+              />
+              <img
+                src="/images/momo_mtn_logo.png"
+                alt="MTN Mobile Money"
+                className="h-8"
+              />
             </div>
             <div className="flex items-center gap-1">
-              <span>Made with</span>
-              <Heart size={12} className="text-babyPink fill-babyPink" />
-              <a href="">
-                <span>by Softnage</span>
+              <span>Designed and Developed By</span>
+              <a href="https://www.softnage.com/" target="_blank">
+                <span className="font-bold text-white">Softnage</span>
               </a>
             </div>
           </div>

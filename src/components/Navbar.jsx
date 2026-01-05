@@ -39,7 +39,7 @@ const Navbar = () => {
   const categoryExtras = {
     "Newborn Essentials": {
       image:
-        "https://images.unsplash.com/photo-1522771753035-1a5b6562f3ba?auto=format&fit=crop&q=80&w=600",
+        "/cat_images/newborn_essentials.png",
       color: "bg-pink-100",
     },
     Clothing: {
@@ -61,7 +61,7 @@ const Navbar = () => {
     },
     "Bath & Skincare": {
       image:
-        "https://images.unsplash.com/photo-1608248597279-f99d160bfbc8?auto=format&fit=crop&q=80&w=600",
+        "/cat_images/bath_and_skincare.png",
       color: "bg-teal-100",
     },
     "Maternity Wear": {
@@ -175,6 +175,19 @@ const Navbar = () => {
               className="p-2.5 text-slate-700 hover:text-pink-500 hover:bg-pink-50 rounded-lg transition hidden sm:block"
             >
               <User size={20} />
+            </Link>
+
+            <Link
+              to="/wishlist"
+              onClick={() => setActiveMenu(null)}
+              className="p-2.5 text-slate-700 hover:text-pink-500 hover:bg-pink-50 rounded-lg transition relative"
+            >
+              <Heart size={20} />
+              {wishlistCount > 0 && (
+                <span className="absolute top-1 right-1 bg-pink-500 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center">
+                  {wishlistCount}
+                </span>
+              )}
             </Link>
 
             <Link
@@ -497,7 +510,7 @@ const Navbar = () => {
                 Welcome to D'Bees
               </p>
               <Link
-                to="/login"
+                to="/auth"
                 className="text-xs text-pink-500 font-semibold hover:underline"
                 onClick={() => setIsOpen(false)}
               >
