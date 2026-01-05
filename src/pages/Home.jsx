@@ -1,5 +1,6 @@
 import { useState } from "react";
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Heart,
   Search,
@@ -17,9 +18,13 @@ import Footer from "../components/Footer";
 import NewArrivalsBanners from "../components/NewArrivalsBanners";
 import NewArrivalsProducts from "../components/NewArrivalsProducts";
 import TestimonialCarousel from "../components/Testimonials";
+import { useCart } from "../context/CartContext";
+import { products } from "../data/products";
 
 const Home = () => {
-  const [currency, setCurrency] = useState("₵");
+  const navigate = useNavigate();
+  const { addToCart, toggleWishlist, isInWishlist } = useCart();
+  const [currency, setCurrency] = useState("GH₵");
 
   const categories = [
     { name: "Newborn Essentials", icon: "👶" },
@@ -30,45 +35,8 @@ const Home = () => {
     { name: "Bath & Skincare", icon: "🛁" },
   ];
 
-  const featuredProducts = [
-    {
-      id: 1,
-      name: "Organic Cotton Onesie Set",
-      price: 24.99,
-      image: "/images/organic-cotton.jpg",
-      rating: 4.9,
-      reviews: "(120)",
-      badge: "Best Seller",
-    },
-    {
-      id: 2,
-      name: "Wooden Stacking Toy",
-      price: 15.5,
-      image:
-        "https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?w=600&q=80",
-      rating: 4.7,
-      reviews: "(85)",
-      badge: "New Arrival",
-    },
-    {
-      id: 3,
-      name: "Soft Knit Baby Blanket",
-      price: 32.0,
-      image: "/images/soft_knit_baby_blanket.jpg",
-      rating: 4.8,
-      reviews: "(200)",
-      badge: "Sale",
-    },
-    {
-      id: 4,
-      name: "Silicone Feeding Set",
-      price: 18.99,
-      image: "/images/silicon_feeding_set.jpg",
-      rating: 4.6,
-      reviews: "(65)",
-      badge: null,
-    },
-  ];
+  const featuredProducts = products.slice(0, 4);
+
   const formatPrice = (price) => {
     return price.toLocaleString(undefined, {
       minimumFractionDigits: 2,
@@ -118,6 +86,11 @@ const Home = () => {
                   {categories.map((cat) => (
                     <button
                       key={cat.name}
+                      onClick={() =>
+                        navigate(
+                          `/shop/${cat.name.toLowerCase().replace(/ & /g, "-").replace(/ /g, "-")}`,
+                        )
+                      }
                       className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-babyPink transition text-left group cursor-pointer"
                     >
                       <span className="text-2xl">{cat.icon}</span>
@@ -202,6 +175,7 @@ const Home = () => {
               <div
                 className="bg-white rounded-b-2xl shadow-md hover:shadow-2xl transition-all duration-300 transform cursor-pointer group border border-transparent hover:border-pink-100"
                 key={product.id}
+                onClick={() => navigate(`/product/${product.id}`)}
               >
                 {/* Image Container */}
                 <div className="relative bg-linear-to-r from-pink-50 to-blue-50 flex items-center justify-center h-64 overflow-hidden">
@@ -219,8 +193,21 @@ const Home = () => {
                   )}
 
                   {/* Heart Button (Right - Fixed placement) */}
-                  <button className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-pink-50 z-10 hover:text-pink-500 transform translate-y-2 group-hover:translate-y-0">
-                    <Heart size={18} />
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleWishlist(product);
+                    }}
+                    className={`absolute top-4 right-4 p-2 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-all duration-300 z-10 transform translate-y-2 group-hover:translate-y-0 ${
+                      isInWishlist(product.id)
+                        ? "bg-pink-500 text-white opacity-100 translate-y-0"
+                        : "bg-white text-gray-400 hover:bg-pink-50 hover:text-pink-500"
+                    }`}
+                  >
+                    <Heart
+                      size={18}
+                      fill={isInWishlist(product.id) ? "currentColor" : "none"}
+                    />
                   </button>
                 </div>
 
@@ -252,7 +239,12 @@ const Home = () => {
                       </span>
                       {formatPrice(product.price)}
                     </span>
-                    <CartButton />
+                    <CartButton
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        addToCart(product);
+                      }}
+                    />
                   </div>
                 </div>
               </div>

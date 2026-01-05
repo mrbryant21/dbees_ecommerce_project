@@ -87,7 +87,7 @@ const Footer = () => {
             <h4 className="text-white font-semibold mb-6">Contact Us</h4>
             <ul className="space-y-4">
               <li className="flex items-start gap-3 text-sm">
-                <MapPin className="text-[#e0f2fe] shrink-0" size={20} />
+                <MapPin className="text-babyBlue shrink-0" size={20} />
                 <span>
                   Oppposite Boss FM Building
                   <br />
@@ -95,11 +95,11 @@ const Footer = () => {
                 </span>
               </li>
               <li className="flex items-center gap-3 text-sm">
-                <Phone className="text-[#e0f2fe] shrink-0" size={20} />
+                <Phone className="text-babyBlue shrink-0" size={20} />
                 <span>+233 (55) 123-4567</span>
               </li>
               <li className="flex items-center gap-3 text-sm">
-                <Mail className="text-[#e0f2fe] shrink-0" size={20} />
+                <Mail className="text-babyBlue shrink-0" size={20} />
                 <span>hello@dbeesbabyshop.com</span>
               </li>
             </ul>
@@ -123,12 +123,12 @@ const Footer = () => {
                 Terms of Service
               </a>
               <a href="#" className="hover:text-white transition-colors">
-                Cookie Policy
+                Cookie Policy 
               </a>
             </div>
             <div className="flex items-center gap-1">
               <span>Made with</span>
-              <Heart size={12} className="text-[#fce7f3] fill-[#fce7f3]" />
+              <Heart size={12} className="text-babyPink fill-babyPink" />
               <a href="">
                 <span>by Softnage</span>
               </a>
@@ -145,7 +145,7 @@ const FooterLink = ({ text }) => (
   <li>
     <a
       href="#"
-      className="text-sm hover:text-[#e0f2fe] hover:pl-1 transition-all duration-200"
+      className="text-sm hover:text-babyBlue hover:pl-1 transition-all duration-200"
     >
       {text}
     </a>
@@ -155,7 +155,7 @@ const FooterLink = ({ text }) => (
 const SocialLink = ({ icon: Icon }) => (
   <a
     href="#"
-    className="p-2 bg-gray-800 rounded-full hover:bg-[#e0f2fe] hover:text-gray-900 transition-all duration-300 group"
+    className="p-2 bg-gray-800 rounded-full hover:bg-babyBlue hover:text-gray-900 transition-all duration-300 group"
   >
     <Icon size={18} />
   </a>

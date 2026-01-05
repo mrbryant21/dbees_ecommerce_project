@@ -11,8 +11,11 @@ import {
   Gift,
   ChevronRight,
 } from "lucide-react";
+import { categories as categoryData } from "../data/categories";
+import { useCart } from "../context/CartContext";
 
 const Navbar = () => {
+  const { cartCount, wishlistCount } = useCart();
   const [isOpen, setIsOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [activeMenu, setActiveMenu] = useState(null); // Tracks which menu is open
@@ -31,72 +34,37 @@ const Navbar = () => {
     };
   }, [isOpen]);
 
-  // Dummy data for cart/wishlist
-  const [cartCount] = useState(3);
-  const [wishlistCount] = useState(2);
-
   // --- CONFIGURATION DATA ---
-  // This defines what shows up in the "Shop By Category" column for each tab
-  const navigationData = {
+  // Map images and colors to categories from data
+  const categoryExtras = {
+    "Newborn Essentials": {
+      image:
+        "https://images.unsplash.com/photo-1522771753035-1a5b6562f3ba?auto=format&fit=crop&q=80&w=600",
+      color: "bg-pink-100",
+    },
     Clothing: {
-      categories: [
-        "Bodysuits",
-        "Rompers & Jumpsuits",
-        "Sleepwear",
-        "Dresses",
-        "Tops & Tees",
-        "Bottoms",
-        "Outerwear",
-      ],
       image: "/images/baby_clothing.webp",
       color: "bg-blue-100",
     },
     Toys: {
-      categories: [
-        "Soft Plush Toys",
-        "Wooden Toys",
-        "Educational & STEM",
-        "Rattles & Teethers",
-        "Activity Gyms",
-        "Dolls & Action Figures",
-      ],
       image:
         "https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?auto=format&fit=crop&q=80&w=600",
       color: "bg-yellow-100",
     },
     Nursery: {
-      categories: [
-        "Cribs & Bassinets",
-        "Bedding Sets",
-        "Decor & Wall Art",
-        "Storage & Organization",
-        "Lighting",
-        "Nursing Chairs",
-      ],
       image: "/images/baby_nursery.jpg",
       color: "bg-green-100",
     },
     Feeding: {
-      categories: [
-        "Bottles & Nipples",
-        "High Chairs",
-        "Bibs & Burp Cloths",
-        "Breastfeeding",
-        "Toddler Utensils",
-        "Food Processors",
-      ],
       image: "/images/baby_feeding.webp",
       color: "bg-orange-100",
     },
+    "Bath & Skincare": {
+      image:
+        "https://images.unsplash.com/photo-1608248597279-f99d160bfbc8?auto=format&fit=crop&q=80&w=600",
+      color: "bg-teal-100",
+    },
     "Maternity Wear": {
-      categories: [
-        "Dresses",
-        "Tops",
-        "Leggings",
-        "Nursing Bras",
-        "Loungewear",
-        "Postpartum Care",
-      ],
       image:
         "https://images.unsplash.com/photo-1555252333-9f8e92e65df9?auto=format&fit=crop&q=80&w=600",
       color: "bg-purple-100",
@@ -113,7 +81,7 @@ const Navbar = () => {
       onMouseLeave={() => setActiveMenu(null)} // Close menu when leaving the whole nav
     >
       {/* Top Announcement Bar */}
-      <div className="bg-gradient-to-r from-pink-200 via-blue-200 to-blue-200 py-2.5 text-center text-sm font-semibold text-stone-600 tracking-wide relative z-50">
+      <div className="bg-linear-to-r from-pink-200 via-blue-200 to-blue-200 py-2.5 text-center text-sm font-semibold text-stone-600 tracking-wide relative z-50">
         <div className="flex items-center justify-center gap-2">
           <Gift size={16} className="animate-pulse text-pink-600" />
           <span>FREE SHIPPING ON ORDERS OVER $50 + FREE RETURNS</span>
@@ -121,7 +89,7 @@ const Navbar = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative bg-white z-40">
+      <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 relative bg-white z-40">
         {/* Main Navbar Header */}
         <div className="flex justify-between items-center h-20">
           {/* Mobile Menu Button */}
@@ -136,7 +104,11 @@ const Navbar = () => {
 
           {/* Logo */}
           <div className="shrink-0 flex items-center gap-2">
-            <Link to="/" className="flex items-center gap-2 group">
+            <Link
+              to="/"
+              onClick={() => setActiveMenu(null)}
+              className="flex items-center gap-2 group"
+            >
               {/* Replace with your actual Logo */}
               <img className="max-h-12" src="/images/logo.png" alt="Logo" />
             </Link>
@@ -147,6 +119,7 @@ const Navbar = () => {
             {/* 1. New Arrivals (No Dropdown usually, or simple) */}
             <Link
               to="/shop/new"
+              onClick={() => setActiveMenu(null)}
               className="flex items-center gap-1 text-sm font-bold text-slate-700 hover:text-pink-500 transition"
             >
               <Sparkles size={16} className="text-yellow-400" />
@@ -154,21 +127,22 @@ const Navbar = () => {
             </Link>
 
             {/* 2. Dynamic Categories with MEGA MENU */}
-            {Object.keys(navigationData).map((item) => (
+            {categoryData.map((item) => (
               <div
-                key={item}
+                key={item.name}
                 className="h-full flex items-center"
-                onMouseEnter={() => setActiveMenu(item)}
+                onMouseEnter={() => setActiveMenu(item.name)}
               >
                 <Link
-                  to={`/shop/${item.toLowerCase().replace(" ", "-")}`}
+                  to={`/shop/${item.name.toLowerCase().replace(/ /g, "-")}`}
+                  onClick={() => setActiveMenu(null)}
                   className={`text-sm font-medium transition py-2 border-b-2 ${
-                    activeMenu === item
+                    activeMenu === item.name
                       ? "text-pink-500 border-pink-500"
                       : "text-slate-700 border-transparent hover:text-pink-500"
                   }`}
                 >
-                  {item}
+                  {item.name}
                 </Link>
               </div>
             ))}
@@ -176,6 +150,7 @@ const Navbar = () => {
             {/* 3. Sale Item */}
             <Link
               to="/shop/sale"
+              onClick={() => setActiveMenu(null)}
               className="text-sm font-bold text-red-500 hover:text-red-600 transition flex items-center gap-2"
             >
               Sale
@@ -196,25 +171,15 @@ const Navbar = () => {
 
             <Link
               to="/profile"
+              onClick={() => setActiveMenu(null)}
               className="p-2.5 text-slate-700 hover:text-pink-500 hover:bg-pink-50 rounded-lg transition hidden sm:block"
             >
               <User size={20} />
             </Link>
 
             <Link
-              to="/wishlist"
-              className="p-2.5 text-slate-700 hover:text-pink-500 hover:bg-pink-50 rounded-lg transition relative"
-            >
-              <Heart size={20} />
-              {wishlistCount > 0 && (
-                <span className="absolute top-1 right-1 bg-pink-500 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center">
-                  {wishlistCount}
-                </span>
-              )}
-            </Link>
-
-            <Link
               to="/cart"
+              onClick={() => setActiveMenu(null)}
               className="p-2.5 text-slate-700 hover:text-pink-500 hover:bg-pink-50 rounded-lg transition relative"
             >
               <ShoppingBag size={20} />
@@ -255,7 +220,7 @@ const Navbar = () => {
         onMouseEnter={() => setActiveMenu(activeMenu)} // Keep open while hovering the menu itself
         onMouseLeave={() => setActiveMenu(null)}
       >
-        {activeMenu && navigationData[activeMenu] && (
+        {activeMenu && (
           <div className="max-w-7xl mx-auto px-8 py-10">
             <div className="grid grid-cols-4 gap-8">
               {/* Part 1: Shop By Category */}
@@ -264,19 +229,23 @@ const Navbar = () => {
                   Shop {activeMenu}
                 </h3>
                 <ul className="space-y-3">
-                  {navigationData[activeMenu].categories.map((cat) => (
-                    <li key={cat}>
-                      <Link
-                        to={`/shop/${activeMenu.toLowerCase()}/${cat.toLowerCase().replace(/ /g, "-")}`}
-                        className="text-slate-600 hover:text-pink-500 hover:translate-x-1 transition-all inline-block font-medium"
-                      >
-                        {cat}
-                      </Link>
-                    </li>
-                  ))}
+                  {categoryData
+                    .find((c) => c.name === activeMenu)
+                    ?.subcategories.map((cat) => (
+                      <li key={cat}>
+                        <Link
+                          to={`/shop/${activeMenu.toLowerCase().replace(/ /g, "-")}/${cat.toLowerCase().replace(/ /g, "-")}`}
+                          onClick={() => setActiveMenu(null)}
+                          className="text-slate-600 hover:text-pink-500 hover:translate-x-1 transition-all inline-block font-medium"
+                        >
+                          {cat}
+                        </Link>
+                      </li>
+                    ))}
                   <li className="pt-2">
                     <Link
-                      to={`/shop/${activeMenu.toLowerCase()}`}
+                      to={`/shop/${activeMenu.toLowerCase().replace(/ /g, "-")}`}
+                      onClick={() => setActiveMenu(null)}
                       className="text-pink-500 font-bold text-sm flex items-center gap-1 group"
                     >
                       View All {activeMenu}
@@ -298,7 +267,8 @@ const Navbar = () => {
                   {genders.map((gender) => (
                     <li key={gender}>
                       <Link
-                        to="#"
+                        to={`/shop?gender=${gender.split(" ")[1] || gender}`}
+                        onClick={() => setActiveMenu(null)}
                         className="text-slate-600 hover:text-pink-500 transition-colors block font-medium"
                       >
                         {gender}
@@ -317,7 +287,8 @@ const Navbar = () => {
                   {ages.map((age) => (
                     <Link
                       key={age}
-                      to="#"
+                      to={`/shop?age=${age}`}
+                      onClick={() => setActiveMenu(null)}
                       className="flex items-center justify-between p-3 rounded-lg border border-slate-100 hover:border-pink-200 hover:bg-pink-50 transition group"
                     >
                       <span className="text-slate-600 font-medium group-hover:text-pink-600">
@@ -336,7 +307,10 @@ const Navbar = () => {
               <div className="col-span-1">
                 <div className="relative h-full w-full rounded-2xl overflow-hidden group shadow-md">
                   <img
-                    src={navigationData[activeMenu].image}
+                    src={
+                      categoryExtras[activeMenu]?.image ||
+                      "https://images.unsplash.com/photo-1522771753035-1a5b6562f3ba?auto=format&fit=crop&q=80&w=600"
+                    }
                     alt={activeMenu}
                     className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
                   />
@@ -344,9 +318,13 @@ const Navbar = () => {
                     <span className="text-white text-lg font-bold mb-2">
                       {activeMenu} Collection
                     </span>
-                    <button className="bg-white text-slate-900 py-2 px-4 rounded-full text-xs font-bold uppercase tracking-wide hover:bg-pink-500 hover:text-white transition-colors w-max">
+                    <Link
+                      to={`/shop/${activeMenu.toLowerCase().replace(/ /g, "-")}`}
+                      onClick={() => setActiveMenu(null)}
+                      className="bg-white text-slate-900 py-2 px-4 rounded-full text-xs font-bold uppercase tracking-wide hover:bg-pink-500 hover:text-white transition-colors w-max text-center"
+                    >
                       Explore Now
-                    </button>
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -396,23 +374,25 @@ const Navbar = () => {
             </Link>
 
             {/* Dynamic Categories */}
-            {Object.keys(navigationData).map((cat) => (
-              <div key={cat} className="space-y-1">
+            {categoryData.map((cat) => (
+              <div key={cat.name} className="space-y-1">
                 <button
                   onClick={() =>
-                    setMobileSubMenu(mobileSubMenu === cat ? null : cat)
+                    setMobileSubMenu(
+                      mobileSubMenu === cat.name ? null : cat.name,
+                    )
                   }
                   className={`w-full flex items-center justify-between px-4 py-4 rounded-xl transition-all ${
-                    mobileSubMenu === cat
+                    mobileSubMenu === cat.name
                       ? "bg-pink-50 text-pink-600 font-bold"
                       : "text-slate-700 font-semibold hover:bg-slate-50"
                   }`}
                 >
-                  <span>{cat}</span>
+                  <span>{cat.name}</span>
                   <ChevronRight
                     size={18}
                     className={`transition-transform duration-300 ${
-                      mobileSubMenu === cat ? "rotate-90" : ""
+                      mobileSubMenu === cat.name ? "rotate-90" : ""
                     }`}
                   />
                 </button>
@@ -420,7 +400,7 @@ const Navbar = () => {
                 {/* Sub-menu Accordion */}
                 <div
                   className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                    mobileSubMenu === cat
+                    mobileSubMenu === cat.name
                       ? "max-h-[1000px] opacity-100"
                       : "max-h-0 opacity-0"
                   }`}
@@ -432,10 +412,10 @@ const Navbar = () => {
                         Categories
                       </h4>
                       <div className="grid grid-cols-1 gap-2">
-                        {navigationData[cat].categories.map((sub) => (
+                        {cat.subcategories.map((sub) => (
                           <Link
                             key={sub}
-                            to={`/shop/${cat.toLowerCase()}/${sub.toLowerCase().replace(/ /g, "-")}`}
+                            to={`/shop/${cat.name.toLowerCase().replace(/ /g, "-")}/${sub.toLowerCase().replace(/ /g, "-")}`}
                             className="text-sm text-slate-600 hover:text-pink-500 py-1 block"
                             onClick={() => setIsOpen(false)}
                           >
@@ -454,7 +434,7 @@ const Navbar = () => {
                         {genders.slice(0, 2).map((g) => (
                           <Link
                             key={g}
-                            to="#"
+                            to={`/shop?gender=${g.split(" ")[1] || g}`}
                             className="text-xs text-slate-500 hover:text-pink-500 py-1 block"
                             onClick={() => setIsOpen(false)}
                           >
@@ -469,7 +449,7 @@ const Navbar = () => {
                         {ages.slice(0, 2).map((a) => (
                           <Link
                             key={a}
-                            to="#"
+                            to={`/shop?age=${a}`}
                             className="text-xs text-slate-500 hover:text-pink-500 py-1 block"
                             onClick={() => setIsOpen(false)}
                           >
@@ -480,11 +460,11 @@ const Navbar = () => {
                     </div>
 
                     <Link
-                      to={`/shop/${cat.toLowerCase()}`}
+                      to={`/shop/${cat.name.toLowerCase().replace(/ /g, "-")}`}
                       className="text-pink-500 font-bold text-xs flex items-center gap-1 pt-2"
                       onClick={() => setIsOpen(false)}
                     >
-                      View All {cat}
+                      View All {cat.name}
                       <ChevronRight size={12} />
                     </Link>
                   </div>

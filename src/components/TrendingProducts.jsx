@@ -6,55 +6,19 @@ import {
   Menu,
   User,
   ChevronRight,
-  Star, 
+  Star,
   ArrowRight,
 } from "lucide-react";
 import CartButton from "./CartButton";
+import { products } from "../data/products";
+import { useCart } from "../context/CartContext";
 
 const TrendingProducts = () => {
+  const { addToCart, toggleWishlist, isInWishlist } = useCart();
+  const [currency, setCurrency] = useState("Gh₵");
 
-  const [currency, setCurrency] = useState("₵");
-
-
-  const featuredProducts = [
-    {
-      id: 1,
-      name: "Organic Cotton Onesie Set",
-      price: 24.99,
-      image: "/images/organic-cotton.jpg",
-      rating: 4.9,
-      reviews: "(120)",
-      badge: "Best Seller",
-    },
-    {
-      id: 2,
-      name: "Wooden Stacking Toy",
-      price: 15.50,
-      image:
-        "https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?w=600&q=80",
-      rating: 4.7,
-      reviews: "(85)",
-      badge: "New Arrival",
-    },
-    {
-      id: 3,
-      name: "Soft Knit Baby Blanket",
-      price: 32.00,
-      image: "/images/soft_knit_baby_blanket.jpg",
-      rating: 4.8,
-      reviews: "(200)",
-      badge: "Sale",
-    },
-    {
-      id: 4,
-      name: "Silicone Feeding Set",
-      price: 18.99,
-      image: "/images/silicon_feeding_set.jpg",
-      rating: 4.6,
-      reviews: "(65)",
-      badge: null,
-    },
-  ];
+  // Get top 4 products for trending
+  const featuredProducts = products.slice(0, 4);
 
   const formatPrice = (price) => {
     return price.toLocaleString(undefined, {
@@ -108,8 +72,21 @@ const TrendingProducts = () => {
                 )}
 
                 {/* Heart Button (Right - Fixed placement) */}
-                <button className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-pink-50 z-10 hover:text-pink-500 transform translate-y-2 group-hover:translate-y-0">
-                  <Heart size={18} />
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleWishlist(product);
+                  }}
+                  className={`absolute top-4 right-4 p-2 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-all duration-300 z-10 transform translate-y-2 group-hover:translate-y-0 ${
+                    isInWishlist(product.id)
+                      ? "text-pink-500 opacity-100 translate-y-0"
+                      : "text-gray-400 hover:bg-pink-50 hover:text-pink-500"
+                  }`}
+                >
+                  <Heart
+                    size={18}
+                    fill={isInWishlist(product.id) ? "currentColor" : "none"}
+                  />
                 </button>
               </div>
 
@@ -141,7 +118,12 @@ const TrendingProducts = () => {
                     </span>
                     {formatPrice(product.price)}
                   </span>
-                  <CartButton />
+                  <CartButton
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      addToCart(product);
+                    }}
+                  />
                 </div>
               </div>
             </div>

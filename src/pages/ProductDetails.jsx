@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
+import { useParams } from "react-router-dom";
 import {
   Star,
   Heart,
@@ -14,32 +15,46 @@ import {
 } from "lucide-react";
 import CartButton from "../components/CartButton";
 import Footer from "../components/Footer";
+import { products } from "../data/products";
+import { useCart } from "../context/CartContext";
 
 const ProductDetails = () => {
-  // --- DUMMY DATA ---
-  const product = {
-    id: 1,
-    name: "Organic Cotton Knitted Onesie",
-    price: 1250.0,
-    originalPrice: 1500.0, // For strike-through effect
-    description:
-      "Crafted from 100% GOTS certified organic cotton, this knitted onesie is designed for ultimate comfort and breathability. Featuring natural wood buttons and a seamless design to prevent irritation on delicate skin.",
-    rating: 4.9,
-    reviews: 128,
-    images: [
-      "https://images.unsplash.com/photo-1522771753035-1a5b6562f3ba?auto=format&fit=crop&q=80&w=800", // Main
-      "https://images.unsplash.com/photo-1519689680058-324335c77eba?auto=format&fit=crop&q=80&w=800", // Detail 1
-      "https://images.unsplash.com/photo-1555252333-9f8e92e65df9?auto=format&fit=crop&q=80&w=800", // Detail 2
-      "https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?auto=format&fit=crop&q=80&w=800", // Lifestyle
-    ],
-    colors: [
-      { name: "Ocean Blue", value: "bg-blue-200" },
-      { name: "Soft Pink", value: "bg-pink-200" },
-      { name: "Sage Green", value: "bg-green-200" },
-      { name: "Cream", value: "bg-[#F5F5DC]" },
-    ],
-    sizes: ["0-3M", "3-6M", "6-12M", "12-18M", "18-24M"],
-  };
+  const { productId } = useParams();
+  const { addToCart, toggleWishlist, isInWishlist } = useCart();
+
+  // Find product from data
+  const productData = useMemo(() => {
+    return (
+      products.find((p) => p.id === parseInt(productId)) || {
+        id: 1,
+        name: "Organic Cotton Knitted Onesie",
+        price: 1250.0,
+        originalPrice: 1500.0,
+        description:
+          "Crafted from 100% GOTS certified organic cotton, this knitted onesie is designed for ultimate comfort and breathability. Featuring natural wood buttons and a seamless design to prevent irritation on delicate skin.",
+        rating: 4.9,
+        reviews: 128,
+        category: "Clothing",
+        subcategory: "Bodysuits",
+        images: [
+          "https://images.unsplash.com/photo-1522771753035-1a5b6562f3ba?auto=format&fit=crop&q=80&w=800",
+          "https://images.unsplash.com/photo-1519689680058-324335c77eba?auto=format&fit=crop&q=80&w=800",
+          "https://images.unsplash.com/photo-1555252333-9f8e92e65df9?auto=format&fit=crop&q=80&w=800",
+          "https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?auto=format&fit=crop&q=80&w=800",
+        ],
+        colors: [
+          { name: "Ocean Blue", value: "bg-blue-200" },
+          { name: "Soft Pink", value: "bg-pink-200" },
+          { name: "Sage Green", value: "bg-green-200" },
+          { name: "Cream", value: "bg-[#F5F5DC]" },
+        ],
+        sizes: ["0-3M", "3-6M", "6-12M", "12-18M", "18-24M"],
+      }
+    );
+  }, [productId]);
+
+  // Ensure images array exists
+  const productImages = productData.images || [productData.image];
 
   // --- STATE ---
   const [activeImage, setActiveImage] = useState(0);
@@ -60,11 +75,15 @@ const ProductDetails = () => {
         <div className="flex items-center text-sm text-gray-500 gap-2">
           <span className="hover:text-pink-500 cursor-pointer">Home</span>
           <ChevronRight size={14} />
-          <span className="hover:text-pink-500 cursor-pointer">Clothing</span>
+          <span className="hover:text-pink-500 cursor-pointer">
+            {productData.category}
+          </span>
           <ChevronRight size={14} />
-          <span className="hover:text-pink-500 cursor-pointer">Baby Boy</span>
+          <span className="hover:text-pink-500 cursor-pointer">
+            {productData.subcategory}
+          </span>
           <ChevronRight size={14} />
-          <span className="font-bold text-gray-800">{product.name}</span>
+          <span className="font-bold text-gray-800">{productData.name}</span>
         </div>
       </div>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
@@ -74,7 +93,7 @@ const ProductDetails = () => {
             <div className="flex flex-col-reverse md:flex-row gap-4">
               {/* Thumbnail Grid */}
               <div className="flex md:flex-col gap-4 overflow-x-auto md:overflow-y-auto md:w-24 shrink-0 pb-2 md:pb-0">
-                {product.images.map((img, index) => (
+                {productImages.map((img, index) => (
                   <button
                     key={index}
                     onClick={() => setActiveImage(index)}
@@ -96,15 +115,29 @@ const ProductDetails = () => {
               {/* Main Image */}
               <div className="relative flex-1 aspect-4/3 rounded-2xl overflow-hidden bg-gray-100 group cursor-zoom-in">
                 <img
-                  src={product.images[activeImage]}
+                  src={productImages[activeImage]}
                   alt="Product View"
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                 />
-                <div className="absolute top-4 left-4 bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-full">
-                  -20% OFF
-                </div>
-                <button className="absolute top-4 right-4 p-3 bg-white/80 backdrop-blur-sm rounded-full shadow-lg hover:bg-white hover:text-red-500 transition-all">
-                  <Heart size={20} />
+                {productData.badge && (
+                  <div className="absolute top-4 left-4 bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-full">
+                    {productData.badge}
+                  </div>
+                )}
+                <button
+                  onClick={() => toggleWishlist(productData)}
+                  className={`absolute top-4 right-4 p-3 rounded-full shadow-lg transition-all ${
+                    isInWishlist(productData.id)
+                      ? "bg-pink-500 text-white"
+                      : "bg-white/80 backdrop-blur-sm text-gray-400 hover:bg-white hover:text-red-500"
+                  }`}
+                >
+                  <Heart
+                    size={20}
+                    fill={
+                      isInWishlist(productData.id) ? "currentColor" : "none"
+                    }
+                  />
                 </button>
               </div>
             </div>
@@ -112,11 +145,11 @@ const ProductDetails = () => {
             {/* Product Details Text (Placed below images for better flow) */}
             <div className="mt-12 space-y-8">
               <div className="border-t border-gray-100 pt-8">
-                <h3 className="text-xl font-bold text-gray-900 mb-4">
+                <h3 className="text-md font-bold text-gray-900 mb-4">
                   Description
                 </h3>
-                <p className="text-gray-600 leading-relaxed text-lg">
-                  {product.description}
+                <p className="text-gray-600 leading-relaxed text-sm">
+                  {productData.description}
                 </p>
               </div>
 
@@ -172,7 +205,7 @@ const ProductDetails = () => {
               <div>
                 <div className="flex justify-between items-start">
                   <h1 className="text-3xl font-extrabold text-gray-900 leading-tight mb-2">
-                    {product.name}
+                    {productData.name}
                   </h1>
                   <button className="text-gray-400 hover:text-gray-600">
                     <Share2 size={20} />
@@ -186,77 +219,83 @@ const ProductDetails = () => {
                       className="text-yellow-400 fill-yellow-400"
                     />
                     <span className="font-bold text-yellow-700 text-sm">
-                      {product.rating}
+                      {productData.rating}
                     </span>
                   </div>
                   <span className="text-sm text-gray-500 underline decoration-gray-300 hover:text-pink-500 cursor-pointer">
-                    Read {product.reviews} reviews
+                    Read {productData.reviews} reviews
                   </span>
                 </div>
 
                 <div className="flex items-baseline gap-3">
                   <span className="text-4xl font-extrabold text-pink-600">
-                    {currency} {formatPrice(product.price)}
+                    {currency} {formatPrice(productData.price)}
                   </span>
-                  <span className="text-lg text-gray-400 line-through font-medium">
-                    {currency} {formatPrice(product.originalPrice)}
-                  </span>
+                  {productData.originalPrice && (
+                    <span className="text-lg text-gray-400 line-through font-medium">
+                      {currency} {formatPrice(productData.originalPrice)}
+                    </span>
+                  )}
                 </div>
               </div>
 
               {/* Color Selector */}
-              <div>
-                <span className="text-sm font-bold text-gray-900 uppercase tracking-wide">
-                  Color:{" "}
-                  <span className="text-pink-600">
-                    {product.colors[selectedColor].name}
+              {productData.colors && (
+                <div>
+                  <span className="text-sm font-bold text-gray-900 uppercase tracking-wide">
+                    Color:{" "}
+                    <span className="text-pink-600">
+                      {productData.colors[selectedColor].name}
+                    </span>
                   </span>
-                </span>
-                <div className="flex gap-3 mt-3">
-                  {product.colors.map((color, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setSelectedColor(index)}
-                      className={`w-12 h-12 rounded-full border-2 flex items-center justify-center transition-all ${
-                        selectedColor === index
-                          ? "border-pink-500 ring-2 ring-pink-100 ring-offset-2 scale-110"
-                          : "border-transparent hover:scale-110"
-                      }`}
-                    >
-                      <div
-                        className={`w-full h-full rounded-full ${color.value} shadow-sm`}
-                      />
-                    </button>
-                  ))}
+                  <div className="flex gap-3 mt-3">
+                    {productData.colors.map((color, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setSelectedColor(index)}
+                        className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${
+                          selectedColor === index
+                            ? "border-pink-500 ring-2 ring-pink-100 ring-offset-2 scale-110"
+                            : "border-transparent hover:scale-110"
+                        }`}
+                      >
+                        <div
+                          className={`w-full h-full rounded-full ${color.value} shadow-sm`}
+                        />
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Size Selector */}
-              <div>
-                <div className="flex justify-between items-center mb-3">
-                  <span className="text-sm font-bold text-gray-900 uppercase tracking-wide">
-                    Select Size
-                  </span>
-                  <button className="text-xs text-gray-500 underline hover:text-pink-500">
-                    Size Guide
-                  </button>
-                </div>
-                <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-                  {product.sizes.map((size) => (
-                    <button
-                      key={size}
-                      onClick={() => setSelectedSize(size)}
-                      className={`py-3 rounded-2xl text-sm font-bold transition-all border-2 ${
-                        selectedSize === size
-                          ? "border-pink-500 bg-pink-50 text-pink-600"
-                          : "border-gray-100 text-gray-600 hover:border-gray-300 bg-white"
-                      }`}
-                    >
-                      {size}
+              {productData.sizes && (
+                <div>
+                  <div className="flex justify-between items-center mb-3">
+                    <span className="text-sm font-bold text-gray-900 uppercase tracking-wide">
+                      Select Size
+                    </span>
+                    <button className="text-xs text-gray-500 underline hover:text-pink-500">
+                      Size Guide
                     </button>
-                  ))}
+                  </div>
+                  <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                    {productData.sizes.map((size) => (
+                      <button
+                        key={size}
+                        onClick={() => setSelectedSize(size)}
+                        className={`py-2 rounded-xl text-sm font-bold transition-all border-2 ${
+                          selectedSize === size
+                            ? "border-pink-500 bg-pink-50 text-pink-600"
+                            : "border-gray-100 text-gray-600 hover:border-gray-300 bg-white"
+                        }`}
+                      >
+                        {size}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Quantity & Actions */}
               <div className="pt-6 border-t border-gray-100">
@@ -281,11 +320,14 @@ const ProductDetails = () => {
                   </div>
 
                   {/* Add To Cart Button */}
-                  <button className="flex-1 bg-gray-900 text-white font-bold rounded-2xl py-4 md:h-14 flex items-center justify-center gap-3 shadow-lg shadow-gray-200 hover:bg-pink-600 hover:shadow-pink-200 hover:-translate-y-1 transition-all duration-300">
+                  <button
+                    onClick={() => addToCart(productData, quantity)}
+                    className="flex-1 bg-gray-900 text-white font-bold rounded-2xl py-4 md:h-14 flex items-center justify-center gap-3 shadow-lg shadow-gray-200 hover:bg-pink-600 hover:shadow-pink-200 hover:-translate-y-1 transition-all duration-300"
+                  >
                     <ShoppingBag size={20} />
                     <span>
                       Add to Cart - {currency}{" "}
-                      {formatPrice(product.price * quantity)}
+                      {formatPrice(productData.price * quantity)}
                     </span>
                   </button>
                 </div>
@@ -306,7 +348,7 @@ const ProductDetails = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`pb-4 text-lg font-bold transition-all relative ${
+                className={`pb-4 text-sm font-semibold transition-all relative ${
                   activeTab === tab.id
                     ? "text-pink-600"
                     : "text-gray-400 hover:text-gray-600"
@@ -324,7 +366,7 @@ const ProductDetails = () => {
             {activeTab === "details" && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-12 animate-fadeIn">
                 <div className="space-y-6">
-                  <h4 className="text-xl font-bold text-gray-900">
+                  <h4 className="text-md font-bold text-gray-900">
                     Product Specifications
                   </h4>
                   <ul className="space-y-4">
@@ -337,7 +379,7 @@ const ProductDetails = () => {
                     ].map((spec, i) => (
                       <li
                         key={i}
-                        className="flex justify-between border-b border-gray-50 pb-2"
+                        className="flex justify-between border-b border-gray-50 pb-2 text-sm"
                       >
                         <span className="text-gray-500">{spec.label}</span>
                         <span className="font-bold text-gray-800">
@@ -348,10 +390,10 @@ const ProductDetails = () => {
                   </ul>
                 </div>
                 <div className="bg-pink-50 p-8 rounded-3xl">
-                  <h4 className="text-xl font-bold text-gray-900 mb-4">
+                  <h4 className="text-md font-bold text-gray-900 mb-4">
                     Why You'll Love It
                   </h4>
-                  <p className="text-gray-600 leading-relaxed">
+                  <p className="text-gray-600 text-sm">
                     Our knitted onesies are designed with both style and
                     functionality in mind. The organic cotton ensures that your
                     baby stays comfortable all day long, while the natural wood
@@ -376,7 +418,7 @@ const ProductDetails = () => {
                           <Star key={i} size={20} fill="currentColor" />
                         ))}
                       </div>
-                      <p className="text-gray-500">
+                      <p className="text-gray-500 text-sm">
                         Based on {product.reviews} reviews
                       </p>
                     </div>
@@ -437,7 +479,7 @@ const ProductDetails = () => {
                             <Star key={i} size={14} fill="currentColor" />
                           ))}
                         </div>
-                        <p className="text-gray-600 leading-relaxed">
+                        <p className="text-gray-600 text-sm">
                           {review.comment}
                         </p>
                       </div>
@@ -450,19 +492,19 @@ const ProductDetails = () => {
             {activeTab === "manufacturer" && (
               <div className="animate-fadeIn max-w-3xl">
                 <div className="flex items-center gap-6 mb-8">
-                  <div className="w-20 h-20 bg-blue-100 rounded-2xl flex items-center justify-center text-blue-600 font-bold text-2xl">
+                  <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center text-blue-600 font-bold text-2xl">
                     DB
                   </div>
                   <div>
-                    <h4 className="text-2xl font-bold text-gray-900">
+                    <h4 className="text-md font-bold text-gray-900">
                       D'Bees Shop Ghana
                     </h4>
-                    <p className="text-gray-500">
+                    <p className="text-gray-500 text-sm">
                       Premium Baby Essentials since 2020
                     </p>
                   </div>
                 </div>
-                <p className="text-gray-600 leading-relaxed text-lg">
+                <p className="text-gray-600 text-sm">
                   D'Bees Shop is a locally owned Ghanaian brand dedicated to
                   providing high-quality, sustainable, and stylish baby
                   products. We work closely with local artisans and use only the
@@ -475,25 +517,25 @@ const ProductDetails = () => {
             {activeTab === "shipping" && (
               <div className="animate-fadeIn grid grid-cols-1 md:grid-cols-2 gap-12">
                 <div className="space-y-4">
-                  <h4 className="text-xl font-bold text-gray-900">
+                  <h4 className="text-md font-bold text-gray-900">
                     Shipping Info
                   </h4>
-                  <p className="text-gray-600">
+                  <p className="text-gray-600 text-sm">
                     We offer nationwide delivery across Ghana. Standard shipping
                     takes 2-3 business days within Accra and 3-5 business days
                     for other regions.
                   </p>
-                  <ul className="space-y-2 text-gray-600">
+                  <ul className="space-y-2 text-gray-600 text-sm">
                     <li>• Accra: GH₵ 20.00</li>
                     <li>• Kumasi: GH₵ 45.00</li>
                     <li>• Other Regions: GH₵ 60.00+</li>
                   </ul>
                 </div>
                 <div className="space-y-4">
-                  <h4 className="text-xl font-bold text-gray-900">
+                  <h4 className="text-md font-bold text-gray-900">
                     Return Policy
                   </h4>
-                  <p className="text-gray-600">
+                  <p className="text-gray-600 text-sm">
                     If you're not completely satisfied with your purchase, you
                     can return it within 30 days for a full refund or exchange.
                     Items must be unworn and in their original packaging.

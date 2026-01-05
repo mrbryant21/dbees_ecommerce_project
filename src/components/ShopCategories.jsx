@@ -1,14 +1,18 @@
 import React from "react";
+import { Link } from "react-router-dom";
+import { categories as categoryData } from "../data/categories";
 
-// Mock data for demonstration purposes - ensure you have your actual data
-const ShopCategories = [
-  { name: "New Born Essentials", image: "/cat_images/newborn_essentials.png" },
-  { name: "Baby Clothing", image: "/cat_images/baby_clothing.jpeg" },
-  { name: "Toys & Play", image: "/cat_images/toys_and_play.png" },
-  { name: "Nursery Decor", image: "/cat_images/nursery_decor.png" },
-  { name: "Feeding & Care", image: "/cat_images/feeding_and_care.png" },
-  { name: "Bath & Skincare", image: "/cat_images/bath_and_skincare.png" },
-];
+// Map images to categories from data
+const categoryImages = {
+  "Newborn Essentials": "/cat_images/newborn_essentials.png",
+  Clothing: "/cat_images/baby_clothing.jpeg",
+  Toys: "/cat_images/toys_and_play.png",
+  Nursery: "/cat_images/nursery_decor.png",
+  Feeding: "/cat_images/feeding_and_care.png",
+  "Bath & Skincare": "/cat_images/bath_and_skincare.png",
+  "Maternity Wear":
+    "https://images.unsplash.com/photo-1555252333-9f8e92e65df9?auto=format&fit=crop&q=80&w=600",
+};
 
 const CategorySelection = () => {
   return (
@@ -17,14 +21,18 @@ const CategorySelection = () => {
         <h2 className="text-4xl font-bold mb-10 text-pink-500 text-center md:text-left">
           Shop by Category
         </h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 overflow-hidden shadow-sm">
-          {ShopCategories.map((category) => (
-            <div
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 overflow-hidden shadow-sm">
+          {categoryData.map((category) => (
+            <Link
+              to={`/shop/${category.name.toLowerCase().replace(/ /g, "-")}`}
               className="group relative h-64 lg:h-72 overflow-hidden cursor-pointer"
               key={category.name}
             >
               <img
-                src={category.image}
+                src={
+                  categoryImages[category.name] ||
+                  "/cat_images/newborn_essentials.png"
+                }
                 alt={category.name}
                 className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
               />
@@ -36,7 +44,7 @@ const CategorySelection = () => {
                   {category.name}
                 </span>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>

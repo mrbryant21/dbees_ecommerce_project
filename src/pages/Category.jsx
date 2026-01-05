@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { useNavigate, Link, useLocation } from "react-router-dom";
+import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
 import {
   Heart,
   Search,
@@ -18,10 +18,13 @@ import { products as allProducts } from "../data/products";
 import { categories as categoryData } from "../data/categories";
 import { useCart } from "../context/CartContext";
 
-const Shop = () => {
+const Category = () => {
   const { addToCart, toggleWishlist, isInWishlist } = useCart();
+  const { category: categoryParam, subcategory: subcategoryParam } =
+    useParams();
   const navigate = useNavigate();
   const location = useLocation();
+
   const [currency] = useState("GH₵");
   const [priceRange, setPriceRange] = useState({ min: 0, max: 5000 });
   const [activeFilter, setActiveFilter] = useState(null);
@@ -45,10 +48,34 @@ const Shop = () => {
     }
   }, [location.search]);
 
-  // Filter products
+  // Normalize params
+  const currentCategory = categoryParam
+    ? categoryParam.replace(/-/g, " ")
+    : "All";
+  const currentSubcategory = subcategoryParam
+    ? subcategoryParam.replace(/-/g, " ")
+    : null;
+
+  // Filter products based on category, subcategory, and other filters
   const filteredProducts = useMemo(() => {
     return allProducts
       .filter((product) => {
+        // Category Filter
+        if (
+          currentCategory !== "All" &&
+          product.category.toLowerCase() !== currentCategory.toLowerCase()
+        ) {
+          return false;
+        }
+
+        // Subcategory Filter
+        if (
+          currentSubcategory &&
+          product.subcategory.toLowerCase() !== currentSubcategory.toLowerCase()
+        ) {
+          return false;
+        }
+
         // Price Filter
         if (product.price < priceRange.min || product.price > priceRange.max) {
           return false;
@@ -80,10 +107,18 @@ const Shop = () => {
       .sort((a, b) => {
         if (sortBy === "Price: Low to High") return a.price - b.price;
         if (sortBy === "Price: High to Low") return b.price - a.price;
-        if (sortBy === "Newest Arrivals") return b.id - a.id;
-        return 0;
+        if (sortBy === "Newest Arrivals") return b.id - a.id; // Assuming higher ID is newer
+        return 0; // Featured (default)
       });
-  }, [priceRange, selectedAges, selectedGenders, sortBy, searchQuery]);
+  }, [
+    currentCategory,
+    currentSubcategory,
+    priceRange,
+    selectedAges,
+    selectedGenders,
+    sortBy,
+    searchQuery,
+  ]);
 
   // Data Options
   const ageOptions = [
@@ -140,22 +175,15 @@ const Shop = () => {
 
   return (
     <div className="min-h-screen">
-      <div className="productsPageBanner max-w-7xl mx-auto h-48 md:h-84 overflow-hidden relative mt-8 rounded-2xl shadow-md">
-        <img
-          className="object-center object-cover w-full h-full"
-          src="/images/homepage_banner_1.png"
-          alt="Shop Banner"
-        />
-      </div>
       {/* Spacer for fixed Navbar */}
-      <div className="h-8"></div>
+      <div className="h-24"></div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* --- HEADER ROW: Title & Search --- */}
         <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-800">
-              All Products
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-800 capitalize">
+              {currentSubcategory || currentCategory}
             </h1>
             <p className="text-gray-500 mt-1">
               Showing {filteredProducts.length} results
@@ -384,20 +412,56 @@ const Shop = () => {
                 <li>
                   <Link
                     to="/shop"
-                    className="w-full text-left flex items-center justify-between group text-pink-500 font-bold"
+                    className={`w-full text-left flex items-center justify-between group ${
+                      currentCategory === "All"
+                        ? "text-pink-500 font-bold"
+                        : "text-gray-600 hover:text-pink-500"
+                    }`}
                   >
                     <span>All Products</span>
-                    <div className="w-1.5 h-1.5 rounded-full bg-pink-500"></div>
+                    {currentCategory === "All" && (
+                      <div className="w-1.5 h-1.5 rounded-full bg-pink-500"></div>
+                    )}
                   </Link>
                 </li>
                 {categoryData.map((cat) => (
                   <li key={cat.name}>
                     <Link
                       to={`/shop/${cat.name.toLowerCase().replace(/ /g, "-")}`}
-                      className="w-full text-left flex items-center justify-between group text-gray-600 hover:text-pink-500"
+                      className={`w-full text-left flex items-center justify-between group ${
+                        currentCategory.toLowerCase() === cat.name.toLowerCase()
+                          ? "text-pink-500 font-bold"
+                          : "text-gray-600 hover:text-pink-500"
+                      }`}
                     >
                       <span>{cat.name}</span>
+                      {currentCategory.toLowerCase() ===
+                        cat.name.toLowerCase() && (
+                        <div className="w-1.5 h-1.5 rounded-full bg-pink-500"></div>
+                      )}
                     </Link>
+
+                    {/* Subcategories if active */}
+                    {currentCategory.toLowerCase() ===
+                      cat.name.toLowerCase() && (
+                      <ul className="ml-4 mt-2 space-y-2 border-l-2 border-pink-100 pl-4">
+                        {cat.subcategories.map((sub) => (
+                          <li key={sub}>
+                            <Link
+                              to={`/shop/${cat.name.toLowerCase().replace(/ /g, "-")}/${sub.toLowerCase().replace(/ /g, "-")}`}
+                              className={`text-sm block ${
+                                currentSubcategory?.toLowerCase() ===
+                                sub.toLowerCase()
+                                  ? "text-pink-500 font-bold"
+                                  : "text-gray-500 hover:text-pink-500"
+                              }`}
+                            >
+                              {sub}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -572,4 +636,4 @@ const Shop = () => {
   );
 };
 
-export default Shop;
+export default Category;
