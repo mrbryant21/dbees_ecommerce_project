@@ -12,17 +12,56 @@ import {
   CheckCircle2,
   Lock,
   Banknote,
+  ShoppingBag,
+  MessageCircle, // WhatsApp icon
 } from "lucide-react";
 import Footer from "../components/Footer";
 import { useCart } from "../context/CartContext";
+import { auth, db } from "../config/firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import toast from "react-hot-toast";
 
 const CartAndCheckout = () => {
-  const { cart, removeFromCart, updateQuantity, subtotal } = useCart();
+  const { cart, removeFromCart, updateQuantity, subtotal, clearCart } = useCart();
   const location = useLocation();
   const navigate = useNavigate();
+
   // --- STATE ---
   const [step, setStep] = useState(1); // 1: Cart, 2: Details, 3: Payment
-  const [paymentMethod, setPaymentMethod] = useState("card"); // card, momo, cod
+  const [paymentMethod, setPaymentMethod] = useState("card"); // card, momo, cod, whatsapp
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  // Form State
+  const [contactInfo, setContactInfo] = useState({
+    email: "",
+    phone: "",
+    isGuest: false,
+  });
+
+  const [shippingAddress, setShippingAddress] = useState({
+    firstName: "",
+    lastName: "",
+    address: "",
+    city: "",
+    region: "Greater Accra",
+  });
+
+  // Auth Listener
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      if (currentUser) {
+        setContactInfo((prev) => ({
+          ...prev,
+          email: currentUser.email || "",
+          isGuest: false,
+        }));
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     if (location.pathname === "/checkout") {
@@ -40,6 +79,131 @@ const CartAndCheckout = () => {
 
   const formatPrice = (price) =>
     price.toLocaleString(undefined, { minimumFractionDigits: 2 });
+
+  // Generate Unique Order ID: ORD-TIMESTAMP-RANDOM
+  const generateOrderId = () => {
+    const timestamp = Date.now();
+    const random = Math.floor(Math.random() * 1000); // 0-999
+    return `ORD-${timestamp}-${random}`;
+  };
+
+  // Handle Order Submission
+  const handlePlaceOrder = async () => {
+    // Basic Validation
+    if (step === 3) {
+      if (!contactInfo.email && !contactInfo.phone) {
+        toast.error("Please provide contact information");
+        setStep(2);
+        return;
+      }
+      if (!shippingAddress.address || !shippingAddress.city) {
+        toast.error("Please provide shipping address");
+        setStep(2);
+        return;
+      }
+    }
+
+    setLoading(true);
+
+    try {
+      const orderId = generateOrderId();
+      // Filter out unnecessary fields from items
+      const sanitizeCartItem = (item) => {
+        const {
+          description, thumbnails, badge, category, gender, isDraft, isFeatured,
+          metaDescription, metaTitle, subcategory, shortDescription, reviews, rating,
+          ...rest
+        } = item;
+        return rest;
+      };
+
+      const orderData = {
+        orderId,
+        items: cart.map(sanitizeCartItem),
+        subtotal,
+        shipping,
+        total,
+        currency,
+        status: "pending",
+        createdAt: serverTimestamp(),
+        contactInfo: {
+          email: contactInfo.email,
+          phone: contactInfo.phone,
+        },
+        shippingAddress,
+        paymentMethod,
+        userId: user ? user.uid : null, // Link to user if auth
+        isGuest: !user,
+      };
+
+      // Determine Collection
+      let collectionName = "guestOrders";
+      if (paymentMethod === "whatsapp") {
+        collectionName = "whatsappOrders";
+        orderData.status = "whatsapp_initiated";
+      } else if (user) {
+        collectionName = "orders";
+      }
+
+      // Save to Firestore
+      await setDoc(doc(db, collectionName, orderId), orderData);
+
+      // Handle WhatsApp Redirect
+      if (paymentMethod === "whatsapp") {
+        const itemsList = cart
+          .map(
+            (item, index) =>
+              `${index + 1}. ${item.name}\n   Qty: ${item.quantity} × ${currency}${formatPrice(item.price)} = ${currency}${formatPrice(item.price * item.quantity)}`
+          )
+          .join("\n");
+
+        const message = `🛒 *NEW ORDER REQUEST*
+
+👤 *Customer Details:*
+Name: ${shippingAddress.firstName} ${shippingAddress.lastName}
+Email: ${contactInfo.email}
+Phone: ${contactInfo.phone}
+
+🏠 *Shipping Address:*
+${shippingAddress.address}, ${shippingAddress.city}
+${shippingAddress.region}
+
+🚚 *Delivery:*
+Standard Delivery - ${currency}${formatPrice(shipping)}
+
+🛍️ *Order Items:*
+${itemsList}
+
+💳 *Payment Method:*
+Checkout via WhatsApp
+
+💰 *Order Summary:*
+Subtotal: ${currency}${formatPrice(subtotal)}
+Shipping: ${currency}${formatPrice(shipping)}
+*Total: ${currency}${formatPrice(total)}*
+
+⏰ *Order Time:*
+${new Date().toLocaleString()}
+
+Please confirm this order and provide payment instructions. Thank you! 🙏`;
+
+        const whatsappUrl = `https://wa.me/233542423472?text=${encodeURIComponent(message)}`;
+        window.open(whatsappUrl, "_blank");
+      }
+
+      // Success Actions
+      clearCart();
+      toast.success("Order placed successfully!");
+      navigate("/order-success", { state: { orderId, total, currency } });
+
+    } catch (error) {
+      console.error("Order Error:", error);
+      toast.error("Failed to place order. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   return (
     <div className="bg-gray-50 min-h-screen font-sans">
@@ -171,32 +335,42 @@ const CartAndCheckout = () => {
                       </span>
                       Contact Information
                     </h3>
-                    <button className="text-xs text-pink-600 font-bold hover:underline">
-                      Already have an account? Log in
-                    </button>
+                    {!user && (
+                      <button onClick={() => navigate('/auth')} className="text-xs text-pink-600 font-bold hover:underline">
+                        Already have an account? Log in
+                      </button>
+                    )}
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <input
                       type="email"
                       placeholder="Email Address"
+                      value={contactInfo.email}
+                      onChange={(e) => setContactInfo({ ...contactInfo, email: e.target.value })}
                       className="w-full text-sm p-3 border border-gray-200 rounded-lg focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-200"
                     />
                     <input
                       type="tel"
                       placeholder="Phone Number"
+                      value={contactInfo.phone}
+                      onChange={(e) => setContactInfo({ ...contactInfo, phone: e.target.value })}
                       className="w-full text-sm p-3 border border-gray-200 rounded-lg focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-200"
                     />
                   </div>
-                  <div className="mt-3 flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="guest"
-                      className="rounded text-pink-500 focus:ring-pink-500"
-                    />
-                    <label htmlFor="guest" className="text-xs text-gray-600">
-                      Checkout as guest (No account needed)
-                    </label>
-                  </div>
+                  {!user && (
+                    <div className="mt-3 flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="guest"
+                        checked={contactInfo.isGuest}
+                        onChange={(e) => setContactInfo({ ...contactInfo, isGuest: e.target.checked })}
+                        className="rounded text-pink-500 focus:ring-pink-500"
+                      />
+                      <label htmlFor="guest" className="text-xs text-gray-600">
+                        Checkout as guest (No account needed)
+                      </label>
+                    </div>
+                  )}
                 </div>
 
                 {/* 2. Shipping Address */}
@@ -211,28 +385,44 @@ const CartAndCheckout = () => {
                     <input
                       type="text"
                       placeholder="First Name"
+                      value={shippingAddress.firstName}
+                      onChange={(e) => setShippingAddress({ ...shippingAddress, firstName: e.target.value })}
                       className="w-full text-sm p-3 border border-gray-200 rounded-lg focus:outline-none focus:border-pink-500"
                     />
                     <input
                       type="text"
                       placeholder="Last Name"
+                      value={shippingAddress.lastName}
+                      onChange={(e) => setShippingAddress({ ...shippingAddress, lastName: e.target.value })}
                       className="w-full text-sm p-3 border border-gray-200 rounded-lg focus:outline-none focus:border-pink-500"
                     />
                     <input
                       type="text"
                       placeholder="Address"
+                      value={shippingAddress.address}
+                      onChange={(e) => setShippingAddress({ ...shippingAddress, address: e.target.value })}
                       className="md:col-span-2 w-full text-sm p-3 border border-gray-200 rounded-lg focus:outline-none focus:border-pink-500"
                     />
                     <input
                       type="text"
                       placeholder="City"
+                      value={shippingAddress.city}
+                      onChange={(e) => setShippingAddress({ ...shippingAddress, city: e.target.value })}
                       className="w-full text-sm p-3 border border-gray-200 rounded-lg focus:outline-none focus:border-pink-500"
                     />
                     <div className="relative">
-                      <select className="w-full text-sm p-3 border border-gray-200 rounded-lg focus:outline-none focus:border-pink-500 appearance-none bg-white">
+                      <select
+                        value={shippingAddress.region}
+                        onChange={(e) => setShippingAddress({ ...shippingAddress, region: e.target.value })}
+                        className="w-full text-sm p-3 border border-gray-200 rounded-lg focus:outline-none focus:border-pink-500 appearance-none bg-white"
+                      >
                         <option>Ashanti Region</option>
                         <option>Greater Accra</option>
                         <option>Central Region</option>
+                        <option>Eastern Region</option>
+                        <option>Western Region</option>
+                        <option>Northern Region</option>
+                        <option>Volta Region</option>
                       </select>
                       <ChevronRight
                         className="absolute right-3 top-3.5 rotate-90 text-gray-400"
@@ -255,13 +445,50 @@ const CartAndCheckout = () => {
                 </h3>
 
                 <div className="space-y-3">
+                  {/* WhatsApp Checkout Option */}
+                  <label
+                    className={`flex items-center gap-4 p-4 border rounded-lg cursor-pointer transition-all ${paymentMethod === "whatsapp"
+                      ? "border-green-500 bg-green-50"
+                      : "border-gray-200 hover:border-green-200"
+                      }`}
+                  >
+                    <input
+                      type="radio"
+                      name="payment"
+                      checked={paymentMethod === "whatsapp"}
+                      onChange={() => setPaymentMethod("whatsapp")}
+                      className="text-green-600 focus:ring-green-500"
+                    />
+                    <div className="flex items-center gap-3 flex-1">
+                      <div
+                        className={`p-2 rounded-md shadow-sm ${paymentMethod === "whatsapp"
+                          ? "bg-white text-green-600"
+                          : "bg-gray-100 text-gray-600"
+                          }`}
+                      >
+                        <MessageCircle size={20} />
+                      </div>
+                      <div>
+                        <span className="block text-sm font-bold text-gray-900">
+                          Checkout via WhatsApp
+                        </span>
+                        <span className="block text-xs text-gray-500">
+                          Chat with us to complete your order
+                        </span>
+                      </div>
+                    </div>
+                    {paymentMethod === "whatsapp" && (
+                      <CheckCircle2 size={18} className="text-green-600" />
+                    )}
+                  </label>
+
+
                   {/* Card Option */}
                   <label
-                    className={`flex items-center gap-4 p-4 border rounded-lg cursor-pointer transition-all ${
-                      paymentMethod === "card"
-                        ? "border-pink-500 bg-pink-50"
-                        : "border-gray-200 hover:border-pink-200"
-                    }`}
+                    className={`flex items-center gap-4 p-4 border rounded-lg cursor-pointer transition-all ${paymentMethod === "card"
+                      ? "border-pink-500 bg-pink-50"
+                      : "border-gray-200 hover:border-pink-200"
+                      }`}
                   >
                     <input
                       type="radio"
@@ -272,11 +499,10 @@ const CartAndCheckout = () => {
                     />
                     <div className="flex items-center gap-3 flex-1">
                       <div
-                        className={`p-2 rounded-md shadow-sm ${
-                          paymentMethod === "card"
-                            ? "bg-white text-pink-600"
-                            : "bg-gray-100 text-gray-600"
-                        }`}
+                        className={`p-2 rounded-md shadow-sm ${paymentMethod === "card"
+                          ? "bg-white text-pink-600"
+                          : "bg-gray-100 text-gray-600"
+                          }`}
                       >
                         <CreditCard size={20} />
                       </div>
@@ -296,11 +522,10 @@ const CartAndCheckout = () => {
 
                   {/* Mobile Money Option */}
                   <label
-                    className={`flex items-center gap-4 p-4 border rounded-lg cursor-pointer transition-all ${
-                      paymentMethod === "momo"
-                        ? "border-pink-500 bg-pink-50"
-                        : "border-gray-200 hover:border-pink-200"
-                    }`}
+                    className={`flex items-center gap-4 p-4 border rounded-lg cursor-pointer transition-all ${paymentMethod === "momo"
+                      ? "border-pink-500 bg-pink-50"
+                      : "border-gray-200 hover:border-pink-200"
+                      }`}
                   >
                     <input
                       type="radio"
@@ -311,11 +536,10 @@ const CartAndCheckout = () => {
                     />
                     <div className="flex items-center gap-3 flex-1">
                       <div
-                        className={`p-2 rounded-md shadow-sm ${
-                          paymentMethod === "momo"
-                            ? "bg-white text-pink-600"
-                            : "bg-gray-100 text-gray-600"
-                        }`}
+                        className={`p-2 rounded-md shadow-sm ${paymentMethod === "momo"
+                          ? "bg-white text-pink-600"
+                          : "bg-gray-100 text-gray-600"
+                          }`}
                       >
                         <Lock size={20} />
                       </div>
@@ -335,11 +559,10 @@ const CartAndCheckout = () => {
 
                   {/* Cash on Delivery Option */}
                   <label
-                    className={`flex items-center gap-4 p-4 border rounded-lg cursor-pointer transition-all ${
-                      paymentMethod === "cod"
-                        ? "border-pink-500 bg-pink-50"
-                        : "border-gray-200 hover:border-pink-200"
-                    }`}
+                    className={`flex items-center gap-4 p-4 border rounded-lg cursor-pointer transition-all ${paymentMethod === "cod"
+                      ? "border-pink-500 bg-pink-50"
+                      : "border-gray-200 hover:border-pink-200"
+                      }`}
                   >
                     <input
                       type="radio"
@@ -350,11 +573,10 @@ const CartAndCheckout = () => {
                     />
                     <div className="flex items-center gap-3 flex-1">
                       <div
-                        className={`p-2 rounded-md shadow-sm ${
-                          paymentMethod === "cod"
-                            ? "bg-white text-pink-600"
-                            : "bg-gray-100 text-gray-600"
-                        }`}
+                        className={`p-2 rounded-md shadow-sm ${paymentMethod === "cod"
+                          ? "bg-white text-pink-600"
+                          : "bg-gray-100 text-gray-600"
+                          }`}
                       >
                         <Banknote size={20} />
                       </div>
@@ -423,6 +645,17 @@ const CartAndCheckout = () => {
                     </div>
                   </div>
                 )}
+
+                {/* WhatsApp Instructions - Only show if whatsapp is selected */}
+                {paymentMethod === "whatsapp" && (
+                  <div className="mt-6 pt-6 border-t border-gray-100 animate-fadeIn">
+                    <div className="p-4 bg-green-50 border border-green-100 rounded-lg">
+                      <p className="text-sm text-green-800">
+                        <strong>Note:</strong> You will be redirected to WhatsApp to complete your order.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -449,18 +682,22 @@ const CartAndCheckout = () => {
               )}
 
               <button
+                disabled={loading}
                 onClick={() => {
                   if (step === 1) navigate("/checkout");
-                  else setStep(Math.min(3, step + 1));
+                  else if (step === 2) setStep(3); // Go to Payment
+                  else handlePlaceOrder(); // Final Submit
                 }}
-                className="bg-gray-900 text-white text-sm font-bold px-8 py-3 rounded-full shadow-lg hover:bg-pink-600 transition-all flex items-center gap-2 cursor-pointer"
+                className={`bg-gray-900 text-white text-sm font-bold px-8 py-3 rounded-full shadow-lg hover:bg-pink-600 transition-all flex items-center gap-2 cursor-pointer ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
-                {step === 3
-                  ? paymentMethod === "cod"
-                    ? "Place Order"
-                    : "Pay Now"
-                  : "Proceed to Checkout"}
-                <ChevronRight size={16} />
+                {loading ? "Processing..." : (
+                  step === 3
+                    ? (paymentMethod === "cod" || paymentMethod === "whatsapp")
+                      ? "Place Order"
+                      : "Pay Now"
+                    : "Proceed to Checkout"
+                )}
+                {!loading && <ChevronRight size={16} />}
               </button>
             </div>
           </div>
