@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -19,12 +19,23 @@ import NewArrivalsBanners from "../components/NewArrivalsBanners";
 import NewArrivalsProducts from "../components/NewArrivalsProducts";
 import TestimonialCarousel from "../components/Testimonials";
 import { useCart } from "../context/CartContext";
-import { products } from "../data/products";
+import { fetchProducts } from "../data/products";
 
 const Home = () => {
   const navigate = useNavigate();
   const { addToCart, toggleWishlist, isInWishlist } = useCart();
   const [currency, setCurrency] = useState("GH₵");
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadProducts = async () => {
+      const data = await fetchProducts();
+      setProducts(data);
+      setLoading(false);
+    };
+    loadProducts();
+  }, []);
 
   const categories = [
     { name: "Newborn Essentials", icon: "👶" },
@@ -35,7 +46,7 @@ const Home = () => {
     { name: "Bath & Skincare", icon: "🛁" },
   ];
 
-  const featuredProducts = products.slice(0, 4);
+  const featuredProducts = products.filter(p => p.badge === 'Featured' || p.isFeatured).slice(0, 4);
 
   const formatPrice = (price) => {
     return price.toLocaleString(undefined, {
@@ -180,7 +191,7 @@ const Home = () => {
                 {/* Image Container */}
                 <div className="relative bg-linear-to-r from-pink-50 to-blue-50 flex items-center justify-center h-64 overflow-hidden">
                   <img
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
                     src={product.image}
                     alt={product.name}
                   />
@@ -198,11 +209,10 @@ const Home = () => {
                       e.stopPropagation();
                       toggleWishlist(product);
                     }}
-                    className={`absolute top-4 right-4 p-2 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-all duration-300 z-10 transform translate-y-2 group-hover:translate-y-0 ${
-                      isInWishlist(product.id)
-                        ? "bg-pink-500 text-white opacity-100 translate-y-0"
-                        : "bg-white text-gray-400 hover:bg-pink-50 hover:text-pink-500"
-                    }`}
+                    className={`absolute top-4 right-4 p-2 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-all duration-300 z-10 transform translate-y-2 group-hover:translate-y-0 ${isInWishlist(product.id)
+                      ? "bg-pink-500 text-white opacity-100 translate-y-0"
+                      : "bg-white text-gray-400 hover:bg-pink-50 hover:text-pink-500"
+                      }`}
                   >
                     <Heart
                       size={18}
@@ -233,12 +243,19 @@ const Home = () => {
                   </div>
 
                   <div className="pt-2 border-t border-gray-50 space-y-3">
-                    <span className="text-xl font-extrabold text-red-500 block">
-                      <span className="text-sm font-normal text-gray-500 mr-1">
-                        {currency}
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl font-extrabold text-red-500 block">
+                        <span className="text-sm font-normal text-gray-500 mr-1">
+                          {currency}
+                        </span>
+                        {formatPrice(product.price)}
                       </span>
-                      {formatPrice(product.price)}
-                    </span>
+                      {product.originalPrice && (
+                        <span className="text-sm text-gray-400 line-through font-medium">
+                          {currency} {formatPrice(product.originalPrice)}
+                        </span>
+                      )}
+                    </div>
                     <CartButton
                       onClick={(e) => {
                         e.stopPropagation();

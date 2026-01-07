@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import {
   Star,
@@ -15,54 +15,50 @@ import {
 } from "lucide-react";
 import CartButton from "../components/CartButton";
 import Footer from "../components/Footer";
-import { products } from "../data/products";
+import { fetchProductById, fetchProducts } from "../data/products"; // Added fetchProducts for "You may also like"
 import { useCart } from "../context/CartContext";
 
 const ProductDetails = () => {
   const { productId } = useParams();
   const { addToCart, toggleWishlist, isInWishlist } = useCart();
+  const [productData, setProductData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [currency] = useState("GH₵");
+  const [relatedProducts, setRelatedProducts] = useState([]); // Dynamic related products
 
-  // Find product from data
-  const productData = useMemo(() => {
-    return (
-      products.find((p) => p.id === parseInt(productId)) || {
-        id: 1,
-        name: "Organic Cotton Knitted Onesie",
-        price: 1250.0,
-        originalPrice: 1500.0,
-        description:
-          "Crafted from 100% GOTS certified organic cotton, this knitted onesie is designed for ultimate comfort and breathability. Featuring natural wood buttons and a seamless design to prevent irritation on delicate skin.",
-        rating: 4.9,
-        reviews: 128,
-        category: "Clothing",
-        subcategory: "Bodysuits",
-        images: [
-          "https://images.unsplash.com/photo-1522771753035-1a5b6562f3ba?auto=format&fit=crop&q=80&w=800",
-          "https://images.unsplash.com/photo-1519689680058-324335c77eba?auto=format&fit=crop&q=80&w=800",
-          "https://images.unsplash.com/photo-1555252333-9f8e92e65df9?auto=format&fit=crop&q=80&w=800",
-          "https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?auto=format&fit=crop&q=80&w=800",
-        ],
-        colors: [
-          { name: "Ocean Blue", value: "bg-blue-200" },
-          { name: "Soft Pink", value: "bg-pink-200" },
-          { name: "Sage Green", value: "bg-green-200" },
-          { name: "Cream", value: "bg-[#F5F5DC]" },
-        ],
-        sizes: ["0-3M", "3-6M", "6-12M", "12-18M", "18-24M"],
-      }
-    );
+  useEffect(() => {
+    const loadProduct = async () => {
+      setLoading(true);
+      const data = await fetchProductById(productId);
+      setProductData(data);
+      setLoading(false);
+
+      // Fetch related products (e.g. random 4 or specific category) - simple placeholder logic for now
+      const all = await fetchProducts();
+      setRelatedProducts(all.slice(0, 4));
+    };
+    loadProduct();
   }, [productId]);
 
-  // Ensure images array exists
-  const productImages = productData.images || [productData.image];
+  // Ensure images array exists and include featured image
+  const productImages = useMemo(() => {
+    if (!productData) return [];
+    const mainImage = productData.image;
+    const gallery = productData.images || [];
+    // Combine main image and gallery, then deduplicate
+    const allImages = [mainImage, ...gallery];
+    return [...new Set(allImages)].filter(Boolean); // Remove duplicates and null/undefined
+  }, [productData]);
 
   // --- STATE ---
   const [activeImage, setActiveImage] = useState(0);
   const [selectedColor, setSelectedColor] = useState(0);
   const [selectedSize, setSelectedSize] = useState("6-12M");
   const [quantity, setQuantity] = useState(1);
-  const [currency] = useState("GH₵");
   const [activeTab, setActiveTab] = useState("details");
+
+  if (loading) return <div className="min-h-screen pt-24 text-center">Loading...</div>;
+  if (!productData) return <div className="min-h-screen pt-24 text-center">Product not found</div>;
 
   const formatPrice = (price) => {
     return price.toLocaleString(undefined, { minimumFractionDigits: 2 });
@@ -97,11 +93,10 @@ const ProductDetails = () => {
                   <button
                     key={index}
                     onClick={() => setActiveImage(index)}
-                    className={`relative aspect-square w-20 md:w-full rounded-2xl overflow-hidden border-2 transition-all shrink-0 ${
-                      activeImage === index
-                        ? "border-pink-500 ring-2 ring-pink-200 ring-offset-2"
-                        : "border-transparent opacity-70 hover:opacity-100"
-                    }`}
+                    className={`relative aspect-square w-20 md:w-full rounded-2xl overflow-hidden border-2 transition-all shrink-0 ${activeImage === index
+                      ? "border-pink-500 ring-2 ring-pink-200 ring-offset-2"
+                      : "border-transparent opacity-70 hover:opacity-100"
+                      }`}
                   >
                     <img
                       src={img}
@@ -113,11 +108,11 @@ const ProductDetails = () => {
               </div>
 
               {/* Main Image */}
-              <div className="relative flex-1 aspect-4/3 rounded-2xl overflow-hidden bg-gray-100 group cursor-zoom-in">
+              <div className="relative flex-1 aspect-4/3 rounded-2xl overflow-hidden bg-white group cursor-zoom-in border border-gray-100">
                 <img
                   src={productImages[activeImage]}
                   alt="Product View"
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110"
                 />
                 {productData.badge && (
                   <div className="absolute top-4 left-4 bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-full">
@@ -126,11 +121,10 @@ const ProductDetails = () => {
                 )}
                 <button
                   onClick={() => toggleWishlist(productData)}
-                  className={`absolute top-4 right-4 p-3 rounded-full shadow-lg transition-all ${
-                    isInWishlist(productData.id)
-                      ? "bg-pink-500 text-white"
-                      : "bg-white/80 backdrop-blur-sm text-gray-400 hover:bg-white hover:text-red-500"
-                  }`}
+                  className={`absolute top-4 right-4 p-3 rounded-full shadow-lg transition-all ${isInWishlist(productData.id)
+                    ? "bg-pink-500 text-white"
+                    : "bg-white/80 backdrop-blur-sm text-gray-400 hover:bg-white hover:text-red-500"
+                    }`}
                 >
                   <Heart
                     size={20}
@@ -148,10 +142,15 @@ const ProductDetails = () => {
                 <h3 className="text-md font-bold text-gray-900 mb-4">
                   Description
                 </h3>
-                <p className="text-gray-600 leading-relaxed text-sm">
-                  {productData.description}
-                </p>
+
+                <div
+                  className="text-gray-600 leading-relaxed text-sm"
+                  dangerouslySetInnerHTML={{
+                    __html: productData.description,
+                  }}
+                />
               </div>
+
 
               {/* Trust Features Grid */}
               <div className="grid grid-cols-2 md:grid-cols-3 gap-6 pt-4">
@@ -237,6 +236,22 @@ const ProductDetails = () => {
                     </span>
                   )}
                 </div>
+                <div className="border-t border-gray-100 pt-8">
+                  <h3 className="text-md font-bold text-gray-900 mb-4">
+                    About this item
+                  </h3>
+
+                  <div
+                    className="text-gray-600 text-sm leading-relaxed
+               [&_ul]:list-disc [&_ul]:pl-5
+               [&_li]:mb-2"
+                    dangerouslySetInnerHTML={{
+                      __html: productData.shortDescription,
+                    }}
+                  />
+                </div>
+
+
               </div>
 
               {/* Color Selector */}
@@ -253,11 +268,10 @@ const ProductDetails = () => {
                       <button
                         key={index}
                         onClick={() => setSelectedColor(index)}
-                        className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${
-                          selectedColor === index
-                            ? "border-pink-500 ring-2 ring-pink-100 ring-offset-2 scale-110"
-                            : "border-transparent hover:scale-110"
-                        }`}
+                        className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${selectedColor === index
+                          ? "border-pink-500 ring-2 ring-pink-100 ring-offset-2 scale-110"
+                          : "border-transparent hover:scale-110"
+                          }`}
                       >
                         <div
                           className={`w-full h-full rounded-full ${color.value} shadow-sm`}
@@ -284,11 +298,10 @@ const ProductDetails = () => {
                       <button
                         key={size}
                         onClick={() => setSelectedSize(size)}
-                        className={`py-2 rounded-xl text-sm font-bold transition-all border-2 ${
-                          selectedSize === size
-                            ? "border-pink-500 bg-pink-50 text-pink-600"
-                            : "border-gray-100 text-gray-600 hover:border-gray-300 bg-white"
-                        }`}
+                        className={`py-2 rounded-xl text-sm font-bold transition-all border-2 ${selectedSize === size
+                          ? "border-pink-500 bg-pink-50 text-pink-600"
+                          : "border-gray-100 text-gray-600 hover:border-gray-300 bg-white"
+                          }`}
                       >
                         {size}
                       </button>
@@ -341,18 +354,17 @@ const ProductDetails = () => {
           <div className="flex flex-wrap gap-8 border-b border-gray-100">
             {[
               { id: "details", label: "Product Details" },
-              { id: "reviews", label: `Reviews (${products.reviews})` },
+              { id: "reviews", label: `Reviews (${productData.reviews})` },
               { id: "manufacturer", label: "Manufactured By" },
               { id: "shipping", label: "Shipping & Returns" },
             ].map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`pb-4 text-sm font-semibold transition-all relative ${
-                  activeTab === tab.id
-                    ? "text-pink-600"
-                    : "text-gray-400 hover:text-gray-600"
-                }`}
+                className={`pb-4 text-sm font-semibold transition-all relative ${activeTab === tab.id
+                  ? "text-pink-600"
+                  : "text-gray-400 hover:text-gray-600"
+                  }`}
               >
                 {tab.label}
                 {activeTab === tab.id && (
@@ -411,7 +423,7 @@ const ProductDetails = () => {
                   <div className="lg:col-span-4 space-y-6">
                     <div className="bg-gray-50 p-8 rounded-3xl text-center">
                       <div className="text-5xl font-extrabold text-gray-900 mb-2">
-                        {product.rating}
+                        {productData.rating}
                       </div>
                       <div className="flex justify-center text-yellow-400 mb-2">
                         {[...Array(5)].map((_, i) => (
@@ -419,7 +431,7 @@ const ProductDetails = () => {
                         ))}
                       </div>
                       <p className="text-gray-500 text-sm">
-                        Based on {product.reviews} reviews
+                        Based on {productData.reviews} reviews
                       </p>
                     </div>
 
@@ -571,48 +583,7 @@ const ProductDetails = () => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {[
-              {
-                id: 2,
-                name: "Wooden Stacking Rainbow",
-                price: 450.0,
-                image:
-                  "https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?auto=format&fit=crop&q=80&w=600",
-                category: "Toys",
-                rating: 4.7,
-                reviews: "(85)",
-              },
-              {
-                id: 3,
-                name: "Soft Knit Baby Blanket",
-                price: 890.0,
-                image:
-                  "https://images.unsplash.com/photo-1520031641899-25cd536aabb0?auto=format&fit=crop&q=80&w=600",
-                category: "Nursery",
-                rating: 4.8,
-                reviews: "(200)",
-              },
-              {
-                id: 4,
-                name: "Silicone Feeding Set",
-                price: 320.5,
-                image:
-                  "https://images.unsplash.com/photo-1584143997635-64d88e04d49a?auto=format&fit=crop&q=80&w=600",
-                category: "Feeding",
-                rating: 4.6,
-                reviews: "(65)",
-              },
-              {
-                id: 5,
-                name: "Plush Teddy Bear",
-                price: 250.0,
-                image:
-                  "https://images.unsplash.com/photo-1555445054-01bf80c48e85?auto=format&fit=crop&q=80&w=600",
-                category: "Toys",
-                rating: 4.9,
-                reviews: "(310)",
-              },
-            ].map((item) => (
+            {relatedProducts.map((item) => (
               <div
                 className="bg-white rounded-b-2xl shadow-md hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer group border border-transparent hover:border-pink-100 flex flex-col"
                 key={item.id}

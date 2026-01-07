@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import React from "react";
 import {
   Heart,
@@ -10,12 +10,21 @@ import {
   ArrowRight,
 } from "lucide-react";
 import CartButton from "./CartButton";
-import { products } from "../data/products";
+import { fetchProducts } from "../data/products";
 import { useCart } from "../context/CartContext";
 
 const TrendingProducts = () => {
   const { addToCart, toggleWishlist, isInWishlist } = useCart();
   const [currency, setCurrency] = useState("Gh₵");
+  const [products, setProducts] = useState([]);
+
+  useEffect(() => {
+    const loadProducts = async () => {
+      const data = await fetchProducts();
+      setProducts(data);
+    };
+    loadProducts();
+  }, []);
 
   // Get top 4 products for trending
   const featuredProducts = products.slice(0, 4);
@@ -77,11 +86,10 @@ const TrendingProducts = () => {
                     e.stopPropagation();
                     toggleWishlist(product);
                   }}
-                  className={`absolute top-4 right-4 p-2 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-all duration-300 z-10 transform translate-y-2 group-hover:translate-y-0 ${
-                    isInWishlist(product.id)
-                      ? "text-pink-500 opacity-100 translate-y-0"
-                      : "text-gray-400 hover:bg-pink-50 hover:text-pink-500"
-                  }`}
+                  className={`absolute top-4 right-4 p-2 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-all duration-300 z-10 transform translate-y-2 group-hover:translate-y-0 ${isInWishlist(product.id)
+                    ? "text-pink-500 opacity-100 translate-y-0"
+                    : "text-gray-400 hover:bg-pink-50 hover:text-pink-500"
+                    }`}
                 >
                   <Heart
                     size={18}
@@ -112,12 +120,19 @@ const TrendingProducts = () => {
                 </div>
 
                 <div className="pt-2 border-t border-gray-50 space-y-3">
-                  <span className="text-xl font-extrabold text-red-500 block">
-                    <span className="text-sm font-normal text-gray-500 mr-1">
-                      {currency}
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl font-extrabold text-red-500 block">
+                      <span className="text-sm font-normal text-gray-500 mr-1">
+                        {currency}
+                      </span>
+                      {formatPrice(product.price)}
                     </span>
-                    {formatPrice(product.price)}
-                  </span>
+                    {product.originalPrice && (
+                      <span className="text-sm text-gray-400 line-through font-medium">
+                        {currency} {formatPrice(product.originalPrice)}
+                      </span>
+                    )}
+                  </div>
                   <CartButton
                     onClick={(e) => {
                       e.stopPropagation();

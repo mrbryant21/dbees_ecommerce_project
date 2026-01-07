@@ -1,170 +1,59 @@
-export const products = [
-  {
-    id: 1,
-    name: "Organic Cotton Onesie Set",
-    category: "Clothing",
-    subcategory: "Bodysuits",
-    price: 1250.0,
-    image:
-      "https://images.unsplash.com/photo-1522771753035-1a5b6562f3ba?auto=format&fit=crop&q=80&w=600",
-    rating: 4.9,
-    reviews: "(120)",
-    badge: "Best Seller",
-    age: "0-6 Months",
-    gender: "Unisex",
-  },
-  {
-    id: 2,
-    name: "Wooden Stacking Rainbow",
-    category: "Toys",
-    subcategory: "Wooden Toys",
-    price: 450.0,
-    image:
-      "https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?auto=format&fit=crop&q=80&w=600",
-    rating: 4.7,
-    reviews: "(85)",
-    badge: "New Arrival",
-    age: "12-24 Months",
-    gender: "Unisex",
-  },
-  {
-    id: 3,
-    name: "Soft Knit Baby Blanket",
-    category: "Nursery",
-    subcategory: "Bedding Sets",
-    price: 890.0,
-    image:
-      "https://images.unsplash.com/photo-1520031641899-25cd536aabb0?auto=format&fit=crop&q=80&w=600",
-    rating: 4.8,
-    reviews: "(200)",
-    badge: "Sale",
-    age: "0-6 Months",
-    gender: "Unisex",
-  },
-  {
-    id: 4,
-    name: "Silicone Feeding Set",
-    category: "Feeding",
-    subcategory: "Toddler Utensils",
-    price: 320.5,
-    image:
-      "https://images.unsplash.com/photo-1584143997635-64d88e04d49a?auto=format&fit=crop&q=80&w=600",
-    rating: 4.6,
-    reviews: "(65)",
-    badge: null,
-    age: "6-12 Months",
-    gender: "Unisex",
-  },
-  {
-    id: 5,
-    name: "Plush Teddy Bear",
-    category: "Toys",
-    subcategory: "Soft Plush Toys",
-    price: 250.0,
-    image:
-      "https://images.unsplash.com/photo-1555445054-01bf80c48e85?auto=format&fit=crop&q=80&w=600",
-    rating: 4.9,
-    reviews: "(310)",
-    badge: "Classic",
-    age: "0-6 Months",
-    gender: "Unisex",
-  },
-  {
-    id: 6,
-    name: "Baby Carrier Ergonomic",
-    category: "Newborn Essentials",
-    subcategory: "Grooming",
-    price: 1800.0,
-    image:
-      "https://images.unsplash.com/photo-1544061803-12563d76e33f?auto=format&fit=crop&q=80&w=600",
-    rating: 4.8,
-    reviews: "(42)",
-    badge: null,
-    age: "6-12 Months",
-    gender: "Unisex",
-  },
-  {
-    id: 7,
-    name: "Floral Summer Dress",
-    category: "Clothing",
-    subcategory: "Dresses",
-    price: 550.0,
-    image:
-      "https://images.unsplash.com/photo-1518831959646-742c3a14ebf7?auto=format&fit=crop&q=80&w=600",
-    rating: 4.5,
-    reviews: "(28)",
-    badge: "Trending",
-    age: "2-4 Years",
-    gender: "Girl",
-  },
-  {
-    id: 8,
-    name: "Smart Baby Monitor",
-    category: "Nursery",
-    subcategory: "Lighting",
-    price: 2500.0,
-    image:
-      "https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?auto=format&fit=crop&q=80&w=600",
-    rating: 4.9,
-    reviews: "(150)",
-    badge: "Tech",
-    age: "0-6 Months",
-    gender: "Unisex",
-  },
-  {
-    id: 9,
-    name: "Non-Slip First Walkers",
-    category: "Clothing",
-    subcategory: "Bottoms",
-    price: 280.0,
-    image:
-      "https://images.unsplash.com/photo-1515488042361-25f4682ce396?auto=format&fit=crop&q=80&w=600",
-    rating: 4.4,
-    reviews: "(95)",
-    badge: null,
-    age: "6-12 Months",
-    gender: "Unisex",
-  },
-  {
-    id: 10,
-    name: "Sensory Activity Cube",
-    category: "Toys",
-    subcategory: "Educational & STEM",
-    price: 600.0,
-    image:
-      "https://images.unsplash.com/photo-1588056461993-8a3916960d46?auto=format&fit=crop&q=80&w=600",
-    rating: 4.8,
-    reviews: "(112)",
-    badge: "Best Seller",
-    age: "12-24 Months",
-    gender: "Unisex",
-  },
-  {
-    id: 11,
-    name: "Natural Baby Lotion",
-    category: "Bath & Skincare",
-    subcategory: "Lotions",
-    price: 150.0,
-    image:
-      "https://images.unsplash.com/photo-1608248597279-f99d160bfbc8?auto=format&fit=crop&q=80&w=600",
-    rating: 4.7,
-    reviews: "(500+)",
-    badge: null,
-    age: "0-6 Months",
-    gender: "Unisex",
-  },
-  {
-    id: 12,
-    name: "Modern White Crib",
-    category: "Nursery",
-    subcategory: "Cribs & Bassinets",
-    price: 4500.0,
-    image:
-      "https://images.unsplash.com/photo-1542852601-6c2e3dbf72c6?auto=format&fit=crop&q=80&w=600",
-    rating: 4.9,
-    reviews: "(25)",
-    badge: "Premium",
-    age: "0-6 Months",
-    gender: "Unisex",
-  },
-];
+import { db } from "../config/firebase";
+import { collection, getDocs, doc, getDoc, query, where } from "firebase/firestore";
+
+// Helper to transform Firestore document to our app's product shape
+const transformProduct = (docSnapshot) => {
+  const data = docSnapshot.data();
+  const regularPrice = typeof data.regularPrice === 'number' ? data.regularPrice : parseFloat(data.regularPrice || 0);
+  const salePrice = data.salePrice ? parseFloat(data.salePrice) : null;
+  // Use salePrice if it exists, otherwise regularPrice. 
+  // Map originalPrice only if there is a salePrice to show the strikethrough.
+  const hasSale = salePrice !== null && !isNaN(salePrice);
+
+  return {
+    id: docSnapshot.id,
+    name: data.title || data.name || "Untitled Product",
+    category: data.category || "Uncategorized",
+    subcategory: data.subcategory || "",
+    price: hasSale ? salePrice : regularPrice,
+    originalPrice: hasSale ? regularPrice : null,
+    image: data.featuredImage || "https://via.placeholder.com/600",
+    images: data.thumbnails || data.images || [], // Map thumbnails or images array
+    rating: data.rating || 0, // Assuming rating might be added later or calculated
+    reviews: data.reviewsCount ? `(${data.reviewsCount})` : "(0)", // Adapting to possible new field name or default
+    badge: data.isFeatured ? "Featured" : (data.badge || null), // Map isFeatured to badge if needed, or use existing logic
+    age: data.ageGroup || "0-6 Months", // Mapping likely field for "age"
+    gender: data.gender || "Unisex",
+    description: data.description || "",
+    shortDescription: data.shortDescription || "",
+    ...data // Spread rest of data just in case
+  };
+};
+
+export const fetchProducts = async () => {
+  try {
+    const querySnapshot = await getDocs(collection(db, "products"));
+    const products = querySnapshot.docs.map(transformProduct);
+    return products;
+  } catch (error) {
+    console.error("Error fetching products:", error);
+    return [];
+  }
+};
+
+export const fetchProductById = async (id) => {
+  try {
+    const docRef = doc(db, "products", id);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      return transformProduct(docSnap);
+    } else {
+      console.error("No such product!");
+      return null;
+    }
+  } catch (error) {
+    console.error("Error fetching product:", error);
+    return null;
+  }
+};

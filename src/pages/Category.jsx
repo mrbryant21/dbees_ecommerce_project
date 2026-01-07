@@ -14,7 +14,7 @@ import {
 import CartButton from "../components/CartButton";
 import PriceRangeSlider from "../components/PriceRangeSlider";
 import Footer from "../components/Footer";
-import { products as allProducts } from "../data/products";
+import { fetchProducts } from "../data/products";
 import { categories as categoryData } from "../data/categories";
 import { useCart } from "../context/CartContext";
 
@@ -33,6 +33,17 @@ const Category = () => {
   const [sortBy, setSortBy] = useState("Featured");
   const [viewMode, setViewMode] = useState("grid");
   const [searchQuery, setSearchQuery] = useState("");
+  const [allProducts, setAllProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadProducts = async () => {
+      const data = await fetchProducts();
+      setAllProducts(data);
+      setLoading(false);
+    };
+    loadProducts();
+  }, []);
 
   // Handle query parameters (gender, age) from URL
   useEffect(() => {
@@ -208,22 +219,20 @@ const Category = () => {
             <div className="flex items-center bg-white border-2 border-gray-200 rounded-full p-1 shadow-sm">
               <button
                 onClick={() => setViewMode("grid")}
-                className={`p-2 rounded-full transition-all ${
-                  viewMode === "grid"
-                    ? "bg-pink-500 text-white shadow-sm"
-                    : "text-gray-400 hover:text-pink-500"
-                }`}
+                className={`p-2 rounded-full transition-all ${viewMode === "grid"
+                  ? "bg-pink-500 text-white shadow-sm"
+                  : "text-gray-400 hover:text-pink-500"
+                  }`}
                 title="Grid View"
               >
                 <LayoutGrid size={20} />
               </button>
               <button
                 onClick={() => setViewMode("list")}
-                className={`p-2 rounded-full transition-all ${
-                  viewMode === "list"
-                    ? "bg-pink-500 text-white shadow-sm"
-                    : "text-gray-400 hover:text-pink-500"
-                }`}
+                className={`p-2 rounded-full transition-all ${viewMode === "list"
+                  ? "bg-pink-500 text-white shadow-sm"
+                  : "text-gray-400 hover:text-pink-500"
+                  }`}
                 title="List View"
               >
                 <List size={20} />
@@ -253,11 +262,10 @@ const Category = () => {
               onClick={() =>
                 setActiveFilter(activeFilter === "age" ? null : "age")
               }
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border text-sm font-medium transition-all ${
-                selectedAges.length > 0 || activeFilter === "age"
-                  ? "border-pink-500 text-pink-600 bg-pink-50"
-                  : "border-gray-200 text-gray-600 hover:border-pink-300 bg-white"
-              }`}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border text-sm font-medium transition-all ${selectedAges.length > 0 || activeFilter === "age"
+                ? "border-pink-500 text-pink-600 bg-pink-50"
+                : "border-gray-200 text-gray-600 hover:border-pink-300 bg-white"
+                }`}
             >
               By Age
               {selectedAges.length > 0 && (
@@ -310,11 +318,10 @@ const Category = () => {
               onClick={() =>
                 setActiveFilter(activeFilter === "gender" ? null : "gender")
               }
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border text-sm font-medium transition-all ${
-                selectedGenders.length > 0 || activeFilter === "gender"
-                  ? "border-pink-500 text-pink-600 bg-pink-50"
-                  : "border-gray-200 text-gray-600 hover:border-pink-300 bg-white"
-              }`}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border text-sm font-medium transition-all ${selectedGenders.length > 0 || activeFilter === "gender"
+                ? "border-pink-500 text-pink-600 bg-pink-50"
+                : "border-gray-200 text-gray-600 hover:border-pink-300 bg-white"
+                }`}
             >
               By Gender
               {selectedGenders.length > 0 && (
@@ -384,11 +391,10 @@ const Category = () => {
                       setSortBy(option);
                       setActiveFilter(null);
                     }}
-                    className={`w-full text-left px-4 py-3 rounded-lg text-sm transition-colors flex justify-between items-center ${
-                      sortBy === option
-                        ? "bg-pink-50 text-pink-600 font-bold"
-                        : "text-gray-600 hover:bg-gray-50"
-                    }`}
+                    className={`w-full text-left px-4 py-3 rounded-lg text-sm transition-colors flex justify-between items-center ${sortBy === option
+                      ? "bg-pink-50 text-pink-600 font-bold"
+                      : "text-gray-600 hover:bg-gray-50"
+                      }`}
                   >
                     {option}
                     {sortBy === option && <Check size={16} />}
@@ -412,11 +418,10 @@ const Category = () => {
                 <li>
                   <Link
                     to="/shop"
-                    className={`w-full text-left flex items-center justify-between group ${
-                      currentCategory === "All"
-                        ? "text-pink-500 font-bold"
-                        : "text-gray-600 hover:text-pink-500"
-                    }`}
+                    className={`w-full text-left flex items-center justify-between group ${currentCategory === "All"
+                      ? "text-pink-500 font-bold"
+                      : "text-gray-600 hover:text-pink-500"
+                      }`}
                   >
                     <span>All Products</span>
                     {currentCategory === "All" && (
@@ -428,40 +433,38 @@ const Category = () => {
                   <li key={cat.name}>
                     <Link
                       to={`/shop/${cat.name.toLowerCase().replace(/ /g, "-")}`}
-                      className={`w-full text-left flex items-center justify-between group ${
-                        currentCategory.toLowerCase() === cat.name.toLowerCase()
-                          ? "text-pink-500 font-bold"
-                          : "text-gray-600 hover:text-pink-500"
-                      }`}
+                      className={`w-full text-left flex items-center justify-between group ${currentCategory.toLowerCase() === cat.name.toLowerCase()
+                        ? "text-pink-500 font-bold"
+                        : "text-gray-600 hover:text-pink-500"
+                        }`}
                     >
                       <span>{cat.name}</span>
                       {currentCategory.toLowerCase() ===
                         cat.name.toLowerCase() && (
-                        <div className="w-1.5 h-1.5 rounded-full bg-pink-500"></div>
-                      )}
+                          <div className="w-1.5 h-1.5 rounded-full bg-pink-500"></div>
+                        )}
                     </Link>
 
                     {/* Subcategories if active */}
                     {currentCategory.toLowerCase() ===
                       cat.name.toLowerCase() && (
-                      <ul className="ml-4 mt-2 space-y-2 border-l-2 border-pink-100 pl-4">
-                        {cat.subcategories.map((sub) => (
-                          <li key={sub}>
-                            <Link
-                              to={`/shop/${cat.name.toLowerCase().replace(/ /g, "-")}/${sub.toLowerCase().replace(/ /g, "-")}`}
-                              className={`text-sm block ${
-                                currentSubcategory?.toLowerCase() ===
-                                sub.toLowerCase()
+                        <ul className="ml-4 mt-2 space-y-2 border-l-2 border-pink-100 pl-4">
+                          {cat.subcategories.map((sub) => (
+                            <li key={sub}>
+                              <Link
+                                to={`/shop/${cat.name.toLowerCase().replace(/ /g, "-")}/${sub.toLowerCase().replace(/ /g, "-")}`}
+                                className={`text-sm block ${currentSubcategory?.toLowerCase() ===
+                                  sub.toLowerCase()
                                   ? "text-pink-500 font-bold"
                                   : "text-gray-500 hover:text-pink-500"
-                              }`}
-                            >
-                              {sub}
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
+                                  }`}
+                              >
+                                {sub}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                   </li>
                 ))}
               </ul>
@@ -497,21 +500,19 @@ const Category = () => {
               >
                 {filteredProducts.map((product) => (
                   <div
-                    className={`bg-white shadow-md hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer group border border-transparent hover:border-pink-100 ${
-                      viewMode === "grid"
-                        ? "rounded-b-2xl flex flex-col"
-                        : "rounded-2xl flex flex-col sm:flex-row overflow-hidden"
-                    }`}
+                    className={`bg-white shadow-md hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer group border border-transparent hover:border-pink-100 ${viewMode === "grid"
+                      ? "rounded-b-2xl flex flex-col"
+                      : "rounded-2xl flex flex-col sm:flex-row overflow-hidden"
+                      }`}
                     key={product.id}
                     onClick={() => navigate(`/product/${product.id}`)}
                   >
                     {/* Image Container */}
                     <div
-                      className={`relative bg-gradient-to-r from-pink-50 to-blue-50 flex items-center justify-center overflow-hidden ${
-                        viewMode === "grid"
-                          ? "h-64 w-full"
-                          : "h-64 sm:h-auto sm:w-64 md:w-72 shrink-0"
-                      }`}
+                      className={`relative bg-gradient-to-r from-pink-50 to-blue-50 flex items-center justify-center overflow-hidden ${viewMode === "grid"
+                        ? "h-64 w-full"
+                        : "h-64 sm:h-auto sm:w-64 md:w-72 shrink-0"
+                        }`}
                     >
                       <img
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
@@ -528,11 +529,10 @@ const Category = () => {
 
                       {/* Heart Button (Right - Fixed placement) */}
                       <button
-                        className={`absolute top-4 right-4 p-2 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-all duration-300 z-10 transform translate-y-2 group-hover:translate-y-0 ${
-                          isInWishlist(product.id)
-                            ? "text-pink-500 opacity-100 translate-y-0"
-                            : "text-gray-400 hover:bg-pink-50 hover:text-pink-500"
-                        }`}
+                        className={`absolute top-4 right-4 p-2 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-all duration-300 z-10 transform translate-y-2 group-hover:translate-y-0 ${isInWishlist(product.id)
+                          ? "text-pink-500 opacity-100 translate-y-0"
+                          : "text-gray-400 hover:bg-pink-50 hover:text-pink-500"
+                          }`}
                         onClick={(e) => {
                           e.stopPropagation();
                           toggleWishlist(product);
@@ -573,12 +573,19 @@ const Category = () => {
                       <div
                         className={`pt-2 border-t border-gray-50 flex ${viewMode === "grid" ? "flex-col space-y-3" : "flex-row items-center justify-between gap-4"}`}
                       >
-                        <span className="text-xl font-extrabold text-red-500 block">
-                          <span className="text-sm font-normal text-gray-500 mr-1">
-                            {currency}
+                        <div className="flex items-center gap-2">
+                          <span className="text-xl font-extrabold text-red-500 block">
+                            <span className="text-sm font-normal text-gray-500 mr-1">
+                              {currency}
+                            </span>
+                            {formatPrice(product.price)}
                           </span>
-                          {formatPrice(product.price)}
-                        </span>
+                          {product.originalPrice && (
+                            <span className="text-sm text-gray-400 line-through font-medium">
+                              {currency} {formatPrice(product.originalPrice)}
+                            </span>
+                          )}
+                        </div>
                         <div
                           className={viewMode === "list" ? "w-48" : "w-full"}
                         >
