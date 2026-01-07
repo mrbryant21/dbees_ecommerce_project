@@ -17,6 +17,7 @@ import CartButton from "../components/CartButton";
 import Footer from "../components/Footer";
 import { fetchProductById, fetchProducts } from "../data/products"; // Added fetchProducts for "You may also like"
 import { useCart } from "../context/CartContext";
+import { SkeletonProductDetails } from "../components/SkeletonLoader";
 
 const ProductDetails = () => {
   const { productId } = useParams();
@@ -57,7 +58,7 @@ const ProductDetails = () => {
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState("details");
 
-  if (loading) return <div className="min-h-screen pt-24 text-center">Loading...</div>;
+  if (loading) return <SkeletonProductDetails />;
   if (!productData) return <div className="min-h-screen pt-24 text-center">Product not found</div>;
 
   const formatPrice = (price) => {
