@@ -27,6 +27,8 @@ const Shop = () => {
   const [activeFilter, setActiveFilter] = useState(null);
   const [selectedAges, setSelectedAges] = useState([]);
   const [selectedGenders, setSelectedGenders] = useState([]);
+  const [selectedColors, setSelectedColors] = useState([]);
+  const [selectedSizes, setSelectedSizes] = useState([]);
   const [sortBy, setSortBy] = useState("Featured");
   const [viewMode, setViewMode] = useState("grid");
   const [searchQuery, setSearchQuery] = useState("");
@@ -78,6 +80,22 @@ const Shop = () => {
           return false;
         }
 
+        // Color Filter
+        if (selectedColors.length > 0) {
+          const productColors = product.colors || [];
+          const hasColor = selectedColors.some(col =>
+            productColors.some(pCol => pCol.toLowerCase() === col.toLowerCase())
+          );
+          if (!hasColor) return false;
+        }
+
+        // Size Filter
+        if (selectedSizes.length > 0) {
+          const productSizes = product.sizes || [];
+          const hasSize = selectedSizes.some(size => productSizes.includes(size));
+          if (!hasSize) return false;
+        }
+
         // Search Filter
         if (
           searchQuery &&
@@ -94,7 +112,7 @@ const Shop = () => {
         if (sortBy === "Newest Arrivals") return b.id - a.id;
         return 0;
       });
-  }, [priceRange, selectedAges, selectedGenders, sortBy, searchQuery]);
+  }, [priceRange, selectedAges, selectedGenders, selectedColors, selectedSizes, sortBy, searchQuery, allProducts]);
 
   // Data Options
   const ageOptions = [
@@ -132,14 +150,48 @@ const Shop = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const colors = [
-    { name: "Blue", class: "bg-blue-400" },
-    { name: "Pink", class: "bg-pink-400" },
-    { name: "Green", class: "bg-green-400" },
-    { name: "Yellow", class: "bg-yellow-400" },
-    { name: "White", class: "bg-white border border-gray-200" },
-    { name: "Black", class: "bg-gray-800" },
-  ];
+  // Extract unique sizes from products
+  const availableSizes = useMemo(() => {
+    const sizes = new Set();
+    allProducts.forEach(product => {
+      if (product.sizes) {
+        product.sizes.forEach(size => sizes.add(size));
+      }
+    });
+    // Sort logic: separate numbers and strings if needed, for simplicity alpha-numeric sort
+    return Array.from(sizes).sort((a, b) => {
+      const numA = parseFloat(a);
+      const numB = parseFloat(b);
+      if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+      return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+    });
+  }, [allProducts]);
+
+  // Helper to get color class - extending standard list
+  const getColorClass = (colorName) => {
+    const lower = colorName.toLowerCase();
+    if (lower.includes('blue')) return 'bg-blue-500';
+    if (lower.includes('pink')) return 'bg-pink-500';
+    if (lower.includes('green')) return 'bg-green-500';
+    if (lower.includes('yellow')) return 'bg-yellow-400';
+    if (lower.includes('red')) return 'bg-red-500';
+    if (lower.includes('purple')) return 'bg-purple-500';
+    if (lower.includes('orange')) return 'bg-orange-500';
+    if (lower.includes('black')) return 'bg-gray-900';
+    if (lower.includes('white')) return 'bg-white border border-gray-200';
+    if (lower.includes('grey') || lower.includes('gray')) return 'bg-gray-400';
+    if (lower.includes('brown')) return 'bg-[#8B4513]'; // Brown hex
+    return 'bg-gray-200'; // Default
+  };
+
+  // Dynamic colors from products + predefined essential ones
+  const availableColors = useMemo(() => {
+    const cols = new Set(['Blue', 'Pink', 'Green', 'Yellow', 'White', 'Black']); // Defaults
+    allProducts.forEach(p => {
+      if (p.colors) p.colors.forEach(c => cols.add(c));
+    });
+    return Array.from(cols);
+  }, [allProducts]);
 
   // Helper function to format price
   const formatPrice = (price) => {
@@ -410,20 +462,57 @@ const Shop = () => {
             </div>
 
             {/* Colors Section */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-20">
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
               <h3 className="font-bold text-gray-900 mb-4 text-lg">
                 Filter by Color
               </h3>
               <div className="flex flex-wrap gap-3">
-                {colors.map((color, index) => (
-                  <button
-                    key={index}
-                    className={`w-8 h-8 rounded-full shadow-sm hover:scale-110 transition-transform ring-2 ring-transparent hover:ring-gray-300 ${color.class}`}
-                    title={color.name}
-                    aria-label={`Select ${color.name}`}
-                  />
-                ))}
+                {availableColors.map((color, index) => {
+                  const isSelected = selectedColors.includes(color);
+                  return (
+                    <button
+                      key={index}
+                      onClick={() => toggleSelection(color, selectedColors, setSelectedColors)}
+                      className={`w-8 h-8 rounded-full shadow-sm hover:scale-110 transition-transform ring-2 ring-offset-2 ${getColorClass(color)} ${isSelected ? 'ring-pink-500 scale-110' : 'ring-transparent hover:ring-gray-300'}`}
+                      title={color}
+                      aria-label={`Select ${color}`}
+                    >
+                      {isSelected && <div className="w-full h-full flex items-center justify-center">
+                        <Check size={12} className={color.toLowerCase() === 'white' ? 'text-black' : 'text-white'} />
+                      </div>}
+                    </button>
+                  )
+                })}
               </div>
+              {selectedColors.length > 0 && (
+                <button onClick={() => setSelectedColors([])} className="text-xs text-red-500 font-bold mt-4 hover:underline">Clear Colors</button>
+              )}
+            </div>
+
+            {/* Sizes Section */}
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-20">
+              <h3 className="font-bold text-gray-900 mb-4 text-lg">
+                Filter by Size
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {availableSizes.length > 0 ? availableSizes.map((size, index) => {
+                  const isSelected = selectedSizes.includes(size);
+                  return (
+                    <button
+                      key={index}
+                      onClick={() => toggleSelection(size, selectedSizes, setSelectedSizes)}
+                      className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition-all ${isSelected ? 'bg-pink-500 text-white border-pink-500' : 'bg-gray-50 text-gray-700 border-gray-200 hover:border-gray-300'}`}
+                    >
+                      {size}
+                    </button>
+                  )
+                }) : (
+                  <p className="text-sm text-gray-400">No sizes found</p>
+                )}
+              </div>
+              {selectedSizes.length > 0 && (
+                <button onClick={() => setSelectedSizes([])} className="text-xs text-red-500 font-bold mt-4 hover:underline">Clear Sizes</button>
+              )}
             </div>
           </aside>
 
@@ -454,7 +543,7 @@ const Shop = () => {
                         }`}
                     >
                       <img
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
                         src={product.image}
                         alt={product.name}
                       />
@@ -557,6 +646,8 @@ const Shop = () => {
                     setPriceRange({ min: 0, max: 5000 });
                     setSelectedAges([]);
                     setSelectedGenders([]);
+                    setSelectedColors([]);
+                    setSelectedSizes([]);
                     setSearchQuery("");
                   }}
                   className="mt-6 text-pink-500 font-bold hover:underline"

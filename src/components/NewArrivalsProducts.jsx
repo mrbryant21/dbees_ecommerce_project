@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Heart,
   Search,
@@ -14,8 +15,9 @@ import { fetchProducts } from "../data/products";
 import { useCart } from "../context/CartContext";
 
 const NewArrivalsProducts = () => {
+  const navigate = useNavigate();
   const { addToCart, toggleWishlist, isInWishlist } = useCart();
-  const [currency, setCurrency] = useState("GH₵");
+  const [currency] = useState("GH₵");
   const [products, setProducts] = useState([]);
 
   useEffect(() => {
@@ -26,8 +28,8 @@ const NewArrivalsProducts = () => {
     loadProducts();
   }, []);
 
-  // Get last 4 products for new arrivals
-  const featuredProducts = products.slice(-4);
+  // Get last 8 products for new arrivals
+  const featuredProducts = products.slice(-8);
 
   const formatPrice = (price) => {
     return price.toLocaleString(undefined, {
@@ -59,11 +61,12 @@ const NewArrivalsProducts = () => {
             />
           </a>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {featuredProducts.map((product) => (
             <div
               className="bg-white rounded-b-2xl shadow-md hover:shadow-2xl transition-all duration-300 transform cursor-pointer group border border-transparent hover:border-pink-100"
               key={product.id}
+              onClick={() => navigate(`/product/${product.id}`)}
             >
               {/* Image Container */}
               <div className="relative bg-gradient-to-r from-pink-50 to-blue-50 flex items-center justify-center h-64 overflow-hidden">

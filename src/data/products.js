@@ -18,15 +18,17 @@ const transformProduct = (docSnapshot) => {
     price: hasSale ? salePrice : regularPrice,
     originalPrice: hasSale ? regularPrice : null,
     image: data.featuredImage || "https://via.placeholder.com/600",
-    images: data.thumbnails || data.images || [], // Map thumbnails or images array
-    rating: data.rating || 0, // Assuming rating might be added later or calculated
-    reviews: data.reviewsCount ? `(${data.reviewsCount})` : "(0)", // Adapting to possible new field name or default
-    badge: data.isFeatured ? "Featured" : (data.badge || null), // Map isFeatured to badge if needed, or use existing logic
-    age: data.ageGroup || "0-6 Months", // Mapping likely field for "age"
+    images: data.thumbnails || data.images || [],
+    rating: data.rating || 0,
+    reviews: data.reviewsCount ? `(${data.reviewsCount})` : "(0)",
+    badge: data.isFeatured ? "Featured" : (data.badge || null),
+    age: data.ageGroup || "0-6 Months",
     gender: data.gender || "Unisex",
     description: data.description || "",
     shortDescription: data.shortDescription || "",
-    ...data // Spread rest of data just in case
+    ...data,
+    colors: typeof data.colors === 'string' ? data.colors.split(',').map(c => c.trim()).filter(Boolean) : (Array.isArray(data.colors) ? data.colors : []),
+    sizes: typeof data.sizes === 'string' ? data.sizes.split(',').map(s => s.trim()).filter(Boolean) : (Array.isArray(data.sizes) ? data.sizes : [])
   };
 };
 

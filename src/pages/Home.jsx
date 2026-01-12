@@ -182,14 +182,14 @@ const Home = () => {
               />
             </a>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {loading ? (
-              // Show 4 Skeletons while loading
-              [...Array(4)].map((_, index) => (
+              // Show 8 Skeletons while loading
+              [...Array(8)].map((_, index) => (
                 <SkeletonProductCard key={index} />
               ))
             ) : (
-              featuredProducts.map((product) => (
+              featuredProducts.slice(0, 8).map((product) => (
                 <div
                   className="bg-white rounded-b-2xl shadow-md hover:shadow-2xl transition-all duration-300 transform cursor-pointer group border border-transparent hover:border-pink-100"
                   key={product.id}

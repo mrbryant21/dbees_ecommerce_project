@@ -53,10 +53,39 @@ const ProductDetails = () => {
 
   // --- STATE ---
   const [activeImage, setActiveImage] = useState(0);
-  const [selectedColor, setSelectedColor] = useState(0);
-  const [selectedSize, setSelectedSize] = useState("6-12M");
+  const [selectedColor, setSelectedColor] = useState(null);
+  const [selectedSize, setSelectedSize] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState("details");
+
+  // Initialize selected color and size when product loads
+  useEffect(() => {
+    if (productData) {
+      if (productData.colors && productData.colors.length > 0) {
+        setSelectedColor(productData.colors[0]);
+      }
+      if (productData.sizes && productData.sizes.length > 0) {
+        setSelectedSize(productData.sizes[0]);
+      }
+    }
+  }, [productData]);
+
+  // Helper to get color class
+  const getColorClass = (colorName) => {
+    const lower = colorName.toLowerCase();
+    if (lower.includes('blue')) return 'bg-blue-500';
+    if (lower.includes('pink')) return 'bg-pink-500';
+    if (lower.includes('green')) return 'bg-green-500';
+    if (lower.includes('yellow')) return 'bg-yellow-400';
+    if (lower.includes('red')) return 'bg-red-500';
+    if (lower.includes('purple')) return 'bg-purple-500';
+    if (lower.includes('orange')) return 'bg-orange-500';
+    if (lower.includes('black')) return 'bg-gray-900';
+    if (lower.includes('white')) return 'bg-white border border-gray-300';
+    if (lower.includes('grey') || lower.includes('gray')) return 'bg-gray-400';
+    if (lower.includes('brown')) return 'bg-[#8B4513]';
+    return 'bg-gray-200';
+  };
 
   if (loading) return <SkeletonProductDetails />;
   if (!productData) return <div className="min-h-screen pt-24 text-center">Product not found</div>;
@@ -256,26 +285,27 @@ const ProductDetails = () => {
               </div>
 
               {/* Color Selector */}
-              {productData.colors && (
+              {productData.colors && productData.colors.length > 0 && (
                 <div>
                   <span className="text-sm font-bold text-gray-900 uppercase tracking-wide">
                     Color:{" "}
                     <span className="text-pink-600">
-                      {productData.colors[selectedColor].name}
+                      {selectedColor || productData.colors[0]}
                     </span>
                   </span>
-                  <div className="flex gap-3 mt-3">
+                  <div className="flex gap-3 mt-3 flex-wrap">
                     {productData.colors.map((color, index) => (
                       <button
                         key={index}
-                        onClick={() => setSelectedColor(index)}
-                        className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${selectedColor === index
+                        onClick={() => setSelectedColor(color)}
+                        className={`w-10 h-10 rounded-full border-2 flex items-center justify-center transition-all ${selectedColor === color
                           ? "border-pink-500 ring-2 ring-pink-100 ring-offset-2 scale-110"
-                          : "border-transparent hover:scale-110"
+                          : "border-gray-200 hover:scale-110"
                           }`}
+                        title={color}
                       >
                         <div
-                          className={`w-full h-full rounded-full ${color.value} shadow-sm`}
+                          className={`w-full h-full rounded-full ${getColorClass(color)} shadow-sm`}
                         />
                       </button>
                     ))}
@@ -284,7 +314,7 @@ const ProductDetails = () => {
               )}
 
               {/* Size Selector */}
-              {productData.sizes && (
+              {productData.sizes && productData.sizes.length > 0 && (
                 <div>
                   <div className="flex justify-between items-center mb-3">
                     <span className="text-sm font-bold text-gray-900 uppercase tracking-wide">
