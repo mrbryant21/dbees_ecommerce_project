@@ -15,7 +15,7 @@ import CartButton from "../components/CartButton";
 import PriceRangeSlider from "../components/PriceRangeSlider";
 import Footer from "../components/Footer";
 import { fetchProducts } from "../data/products";
-import { categories as categoryData } from "../data/categories";
+import { categories as fallbackCategories, fetchCategories } from "../data/categories";
 import { useCart } from "../context/CartContext";
 
 const Shop = () => {
@@ -33,15 +33,21 @@ const Shop = () => {
   const [viewMode, setViewMode] = useState("grid");
   const [searchQuery, setSearchQuery] = useState("");
   const [allProducts, setAllProducts] = useState([]);
+  const [categories, setCategories] = useState(fallbackCategories);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadProducts = async () => {
-      const data = await fetchProducts();
-      setAllProducts(data);
+    const loadData = async () => {
+      setLoading(true);
+      const [productsData, categoriesData] = await Promise.all([
+        fetchProducts(),
+        fetchCategories()
+      ]);
+      setAllProducts(productsData);
+      setCategories(categoriesData);
       setLoading(false);
     };
-    loadProducts();
+    loadData();
   }, []);
 
   // Handle query parameters (gender, age) from URL
@@ -49,12 +55,12 @@ const Shop = () => {
     const params = new URLSearchParams(location.search);
     const genderParam = params.get("gender");
     const ageParam = params.get("age");
+    const searchParam = params.get("search");
 
-    if (genderParam) {
-      setSelectedGenders([genderParam]);
-    }
-    if (ageParam) {
-      setSelectedAges([ageParam]);
+    setSelectedGenders(genderParam ? [genderParam] : []);
+    setSelectedAges(ageParam ? [ageParam] : []);
+    if (searchParam) {
+      setSearchQuery(searchParam);
     }
   }, [location.search]);
 
@@ -97,11 +103,18 @@ const Shop = () => {
         }
 
         // Search Filter
-        if (
-          searchQuery &&
-          !product.name.toLowerCase().includes(searchQuery.toLowerCase())
-        ) {
-          return false;
+        // Search Filter (Multi-keyword)
+        if (searchQuery) {
+          const searchTokens = searchQuery.toLowerCase().split(/[\s-]+/).filter(Boolean);
+          const productText = `
+            ${product.name} 
+            ${product.category} 
+            ${product.subcategory || ""}
+          `.toLowerCase();
+
+          // Check if EVERY token in the search query exists in the product text
+          const matches = searchTokens.every(token => productText.includes(token));
+          if (!matches) return false;
         }
 
         return true;
@@ -448,10 +461,10 @@ const Shop = () => {
                     <div className="w-1.5 h-1.5 rounded-full bg-pink-500"></div>
                   </Link>
                 </li>
-                {categoryData.map((cat) => (
-                  <li key={cat.name}>
+                {categories.map((cat) => (
+                  <li key={cat.id || cat.slug}>
                     <Link
-                      to={`/shop/${cat.name.toLowerCase().replace(/ /g, "-")}`}
+                      to={`/shop/${cat.slug}`}
                       className="w-full text-left flex items-center justify-between group text-gray-600 hover:text-pink-500"
                     >
                       <span>{cat.name}</span>

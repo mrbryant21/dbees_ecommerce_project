@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import {
   Star,
   Heart,
@@ -99,17 +99,27 @@ const ProductDetails = () => {
       {/* --- BREADCRUMBS --- */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex items-center text-sm text-gray-500 gap-2">
-          <span className="hover:text-pink-500 cursor-pointer">Home</span>
+          <Link to="/" className="hover:text-pink-500 cursor-pointer">Home</Link>
           <ChevronRight size={14} />
-          <span className="hover:text-pink-500 cursor-pointer">
+          <Link
+            to={`/shop/${productData.category.toLowerCase().replace(/ /g, "-")}`}
+            className="hover:text-pink-500 cursor-pointer"
+          >
             {productData.category}
-          </span>
+          </Link>
+          {productData.subcategory && (
+            <>
+              <ChevronRight size={14} />
+              <Link
+                to={`/shop/${productData.category.toLowerCase().replace(/ /g, "-")}/${productData.subcategory.toLowerCase().replace(/ /g, "-")}`}
+                className="hover:text-pink-500 cursor-pointer"
+              >
+                {productData.subcategory}
+              </Link>
+            </>
+          )}
           <ChevronRight size={14} />
-          <span className="hover:text-pink-500 cursor-pointer">
-            {productData.subcategory}
-          </span>
-          <ChevronRight size={14} />
-          <span className="font-bold text-gray-800">{productData.name}</span>
+          <span className="font-bold text-gray-800 line-clamp-1">{productData.name}</span>
         </div>
       </div>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">

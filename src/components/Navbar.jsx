@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   ShoppingBag,
   User,
@@ -11,15 +11,36 @@ import {
   Gift,
   ChevronRight,
 } from "lucide-react";
-import { categories as categoryData } from "../data/categories";
+import { categories as fallbackCategories, fetchCategories } from "../data/categories";
 import { useCart } from "../context/CartContext";
 
 const Navbar = () => {
   const { cartCount, wishlistCount } = useCart();
   const [isOpen, setIsOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [activeMenu, setActiveMenu] = useState(null); // Tracks which menu is open
   const [mobileSubMenu, setMobileSubMenu] = useState(null); // Tracks which mobile sub-menu is open
+  const [categories, setCategories] = useState(fallbackCategories);
+  const navigate = useNavigate();
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      setIsSearchOpen(false);
+      navigate(`/shop?search=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery("");
+    }
+  };
+
+  // Load categories from Firestore
+  useEffect(() => {
+    const loadCategories = async () => {
+      const data = await fetchCategories();
+      setCategories(data);
+    };
+    loadCategories();
+  }, []);
 
   // Close dropdowns when clicking outside
   // Prevent body scroll when mobile menu is open
@@ -127,20 +148,19 @@ const Navbar = () => {
             </Link>
 
             {/* 2. Dynamic Categories with MEGA MENU */}
-            {categoryData.map((item) => (
+            {categories.map((item) => (
               <div
-                key={item.name}
+                key={item.id || item.slug}
                 className="h-full flex items-center"
                 onMouseEnter={() => setActiveMenu(item.name)}
               >
                 <Link
-                  to={`/shop/${item.name.toLowerCase().replace(/ /g, "-")}`}
+                  to={`/shop/${item.slug}`}
                   onClick={() => setActiveMenu(null)}
-                  className={`text-sm font-medium transition py-2 border-b-2 ${
-                    activeMenu === item.name
-                      ? "text-pink-500 border-pink-500"
-                      : "text-slate-700 border-transparent hover:text-pink-500"
-                  }`}
+                  className={`text-sm font-medium transition py-2 border-b-2 ${activeMenu === item.name
+                    ? "text-pink-500 border-pink-500"
+                    : "text-slate-700 border-transparent hover:text-pink-500"
+                    }`}
                 >
                   {item.name}
                 </Link>
@@ -218,6 +238,13 @@ const Navbar = () => {
                 placeholder="Search for products, categories..."
                 className="w-full pl-12 pr-4 py-3 border-2 border-slate-200 rounded-xl focus:border-pink-500 focus:outline-none text-slate-700 placeholder-slate-400"
                 autoFocus
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleSearch(e);
+                  }
+                }}
               />
             </div>
           </div>
@@ -225,11 +252,10 @@ const Navbar = () => {
       </div>
 
       <div
-        className={`absolute top-full left-0 w-full bg-white shadow-xl border-t border-slate-100 transition-all duration-300 origin-top z-30 ${
-          activeMenu
-            ? "opacity-100 visible translate-y-0"
-            : "opacity-0 invisible -translate-y-2"
-        }`}
+        className={`absolute top-full left-0 w-full bg-white shadow-xl border-t border-slate-100 transition-all duration-300 origin-top z-30 ${activeMenu
+          ? "opacity-100 visible translate-y-0"
+          : "opacity-0 invisible -translate-y-2"
+          }`}
         onMouseEnter={() => setActiveMenu(activeMenu)} // Keep open while hovering the menu itself
         onMouseLeave={() => setActiveMenu(null)}
       >
@@ -242,22 +268,22 @@ const Navbar = () => {
                   Shop {activeMenu}
                 </h3>
                 <ul className="space-y-3">
-                  {categoryData
+                  {categories
                     .find((c) => c.name === activeMenu)
                     ?.subcategories.map((cat) => (
-                      <li key={cat}>
+                      <li key={cat.slug}>
                         <Link
-                          to={`/shop/${activeMenu.toLowerCase().replace(/ /g, "-")}/${cat.toLowerCase().replace(/ /g, "-")}`}
+                          to={`/shop/${categories.find((c) => c.name === activeMenu)?.slug}/${cat.slug}`}
                           onClick={() => setActiveMenu(null)}
                           className="text-slate-600 hover:text-pink-500 hover:translate-x-1 transition-all inline-block font-medium"
                         >
-                          {cat}
+                          {cat.name}
                         </Link>
                       </li>
                     ))}
                   <li className="pt-2">
                     <Link
-                      to={`/shop/${activeMenu.toLowerCase().replace(/ /g, "-")}`}
+                      to={`/shop/${categories.find((c) => c.name === activeMenu)?.slug}`}
                       onClick={() => setActiveMenu(null)}
                       className="text-pink-500 font-bold text-sm flex items-center gap-1 group"
                     >
@@ -348,17 +374,15 @@ const Navbar = () => {
 
       {/* Mobile Menu Overlay */}
       <div
-        className={`fixed inset-0 bg-black/50 z-40 transition-opacity duration-300 lg:hidden ${
-          isOpen ? "opacity-100 visible" : "opacity-0 invisible"
-        }`}
+        className={`fixed inset-0 bg-black/50 z-40 transition-opacity duration-300 lg:hidden ${isOpen ? "opacity-100 visible" : "opacity-0 invisible"
+          }`}
         onClick={() => setIsOpen(false)}
       />
 
       {/* Mobile Menu Sidebar */}
       <div
-        className={`fixed top-0 left-0 w-[85%] max-w-sm h-full bg-white z-50 shadow-2xl transition-transform duration-300 ease-out lg:hidden flex flex-col ${
-          isOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`fixed top-0 left-0 w-[85%] max-w-sm h-full bg-white z-50 shadow-2xl transition-transform duration-300 ease-out lg:hidden flex flex-col ${isOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
       >
         {/* Mobile Menu Header */}
         <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-white sticky top-0 z-10">
@@ -387,36 +411,33 @@ const Navbar = () => {
             </Link>
 
             {/* Dynamic Categories */}
-            {categoryData.map((cat) => (
-              <div key={cat.name} className="space-y-1">
+            {categories.map((cat) => (
+              <div key={cat.id || cat.slug} className="space-y-1">
                 <button
                   onClick={() =>
                     setMobileSubMenu(
                       mobileSubMenu === cat.name ? null : cat.name,
                     )
                   }
-                  className={`w-full flex items-center justify-between px-4 py-4 rounded-xl transition-all ${
-                    mobileSubMenu === cat.name
-                      ? "bg-pink-50 text-pink-600 font-bold"
-                      : "text-slate-700 font-semibold hover:bg-slate-50"
-                  }`}
+                  className={`w-full flex items-center justify-between px-4 py-4 rounded-xl transition-all ${mobileSubMenu === cat.name
+                    ? "bg-pink-50 text-pink-600 font-bold"
+                    : "text-slate-700 font-semibold hover:bg-slate-50"
+                    }`}
                 >
                   <span>{cat.name}</span>
                   <ChevronRight
                     size={18}
-                    className={`transition-transform duration-300 ${
-                      mobileSubMenu === cat.name ? "rotate-90" : ""
-                    }`}
+                    className={`transition-transform duration-300 ${mobileSubMenu === cat.name ? "rotate-90" : ""
+                      }`}
                   />
                 </button>
 
                 {/* Sub-menu Accordion */}
                 <div
-                  className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                    mobileSubMenu === cat.name
-                      ? "max-h-[1000px] opacity-100"
-                      : "max-h-0 opacity-0"
-                  }`}
+                  className={`overflow-hidden transition-all duration-300 ease-in-out ${mobileSubMenu === cat.name
+                    ? "max-h-[1000px] opacity-100"
+                    : "max-h-0 opacity-0"
+                    }`}
                 >
                   <div className="pl-6 pr-4 py-2 space-y-4 border-l-2 border-pink-100 ml-6 my-2">
                     {/* Subcategories */}
@@ -427,12 +448,12 @@ const Navbar = () => {
                       <div className="grid grid-cols-1 gap-2">
                         {cat.subcategories.map((sub) => (
                           <Link
-                            key={sub}
-                            to={`/shop/${cat.name.toLowerCase().replace(/ /g, "-")}/${sub.toLowerCase().replace(/ /g, "-")}`}
+                            key={sub.slug}
+                            to={`/shop/${cat.slug}/${sub.slug}`}
                             className="text-sm text-slate-600 hover:text-pink-500 py-1 block"
                             onClick={() => setIsOpen(false)}
                           >
-                            {sub}
+                            {sub.name}
                           </Link>
                         ))}
                       </div>

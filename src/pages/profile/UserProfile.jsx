@@ -17,11 +17,13 @@ import {
 } from "lucide-react";
 import { auth, db } from "../../config/firebase";
 import { onAuthStateChanged, signOut, updatePassword, deleteUser } from "firebase/auth";
-import { collection, query, where, getDocs, orderBy } from "firebase/firestore";
+import { collection, query, where, getDocs, orderBy, updateDoc, doc, serverTimestamp } from "firebase/firestore";
 import toast from "react-hot-toast";
 import Footer from "../../components/Footer";
+import { useCart } from "../../context/CartContext";
 
 const UserProfile = () => {
+  const { addToCart, toggleWishlist, isInWishlist, wishlist } = useCart();
   const [activeTab, setActiveTab] = useState("orders"); // 'orders', 'wishlist', 'settings'
   const [user, setUser] = useState(null);
   const [orders, setOrders] = useState([]);
@@ -135,8 +137,69 @@ const UserProfile = () => {
   };
 
 
-  // --- DUMMY DATA: WISHLIST (Placeholder) ---
-  const wishlist = [];
+
+
+  const handleCancelOrder = async (orderId) => {
+    if (!window.confirm("Are you sure you want to cancel this order?")) return;
+
+    try {
+      const orderRef = doc(db, "orders", orderId);
+      await updateDoc(orderRef, {
+        status: "Cancelled",
+        updatedAt: serverTimestamp()
+      });
+      toast.success("Order cancelled successfully");
+      await fetchOrders(user.uid);
+    } catch (error) {
+      console.error("Error cancelling order:", error);
+      toast.error("Failed to cancel order.");
+    }
+  };
+
+  const handleRefundRequest = async (orderId) => {
+    if (!window.confirm("Are you sure you want to request a return/refund for this order?")) return;
+
+    try {
+      const orderRef = doc(db, "orders", orderId);
+      await updateDoc(orderRef, {
+        status: "Refund Requested",
+        updatedAt: serverTimestamp()
+      });
+      toast.success("Refund request submitted successfully");
+      await fetchOrders(user.uid);
+    } catch (error) {
+      console.error("Error requesting refund:", error);
+      toast.error("Failed to submit refund request.");
+    }
+  };
+
+  const canCancel = (order) => {
+    const s = order.status ? order.status.toLowerCase() : "";
+    // Allow cancellation if it's not yet shipped or delivered
+    const nonCancellable = ["shipped", "in transit", "delivered", "completed", "cancelled", "refund requested"];
+    return s && !nonCancellable.includes(s) && (s === "pending" || s === "processing" || s === "paid" || s === "confirmed");
+  };
+
+  const canReturn = (order) => {
+    const s = order.status ? order.status.toLowerCase() : "";
+    if (s !== "delivered") return false;
+
+    // Robust date parsing
+    let createdAtMs = null;
+    if (order.createdAt?.seconds) {
+      createdAtMs = order.createdAt.seconds * 1000;
+    } else if (order.createdAt instanceof Date) {
+      createdAtMs = order.createdAt.getTime();
+    } else if (typeof order.createdAt === "string") {
+      createdAtMs = new Date(order.createdAt).getTime();
+    }
+
+    if (!createdAtMs || isNaN(createdAtMs)) return false;
+
+    const threeDaysInMs = 3 * 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    return (now - createdAtMs) <= threeDaysInMs;
+  };
 
   // Helper for Status Colors
   const getStatusColor = (status) => {
@@ -144,6 +207,8 @@ const UserProfile = () => {
     if (s === "delivered" || s === "completed") return "bg-green-100 text-green-700 border-green-200";
     if (s === "in transit" || s === "shipped") return "bg-blue-100 text-blue-700 border-blue-200";
     if (s === "pending" || s === "processing") return "bg-yellow-100 text-yellow-700 border-yellow-200";
+    if (s === "cancelled") return "bg-red-100 text-red-700 border-red-200";
+    if (s === "refund requested") return "bg-purple-100 text-purple-700 border-purple-200";
     return "bg-gray-100 text-gray-700";
   };
 
@@ -324,6 +389,28 @@ const UserProfile = () => {
                               </div>
                             ))}
                           </div>
+
+                          {/* Order Actions */}
+                          {(canCancel(order) || canReturn(order)) && (
+                            <div className="mt-6 pt-6 border-t border-gray-100 flex gap-4">
+                              {canCancel(order) && (
+                                <button
+                                  onClick={() => handleCancelOrder(order.id)}
+                                  className="text-sm font-bold text-red-600 hover:text-red-700 transition"
+                                >
+                                  Cancel Order
+                                </button>
+                              )}
+                              {canReturn(order) && (
+                                <button
+                                  onClick={() => handleRefundRequest(order.id)}
+                                  className="text-sm font-bold text-pink-600 hover:text-pink-700 transition"
+                                >
+                                  Request Return
+                                </button>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))

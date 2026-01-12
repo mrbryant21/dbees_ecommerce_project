@@ -15,7 +15,7 @@ import CartButton from "../components/CartButton";
 import PriceRangeSlider from "../components/PriceRangeSlider";
 import Footer from "../components/Footer";
 import { fetchProducts } from "../data/products";
-import { categories as categoryData } from "../data/categories";
+import { categories as fallbackCategories, fetchCategories } from "../data/categories";
 import { useCart } from "../context/CartContext";
 
 const Category = () => {
@@ -34,15 +34,21 @@ const Category = () => {
   const [viewMode, setViewMode] = useState("grid");
   const [searchQuery, setSearchQuery] = useState("");
   const [allProducts, setAllProducts] = useState([]);
+  const [categories, setCategories] = useState(fallbackCategories);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadProducts = async () => {
-      const data = await fetchProducts();
-      setAllProducts(data);
+    const loadData = async () => {
+      setLoading(true);
+      const [productsData, categoriesData] = await Promise.all([
+        fetchProducts(),
+        fetchCategories()
+      ]);
+      setAllProducts(productsData);
+      setCategories(categoriesData);
       setLoading(false);
     };
-    loadProducts();
+    loadData();
   }, []);
 
   // Handle query parameters (gender, age) from URL
@@ -50,41 +56,53 @@ const Category = () => {
     const params = new URLSearchParams(location.search);
     const genderParam = params.get("gender");
     const ageParam = params.get("age");
+    const searchParam = params.get("search");
 
-    if (genderParam) {
-      setSelectedGenders([genderParam]);
-    }
-    if (ageParam) {
-      setSelectedAges([ageParam]);
+    setSelectedGenders(genderParam ? [genderParam] : []);
+    setSelectedAges(ageParam ? [ageParam] : []);
+    if (searchParam) {
+      setSearchQuery(searchParam);
     }
   }, [location.search]);
 
-  // Normalize params
-  const currentCategory = categoryParam
-    ? categoryParam.replace(/-/g, " ")
-    : "All";
-  const currentSubcategory = subcategoryParam
-    ? subcategoryParam.replace(/-/g, " ")
-    : null;
+  // Normalize params - we want to keep the original slug for matching
+  const activeCategory = categories.find(c => c.slug === categoryParam) ||
+    categories.find(c => c.name.toLowerCase().replace(/ /g, "-") === categoryParam);
+
+  const currentCategory = activeCategory ? activeCategory.name : (categoryParam ? categoryParam.replace(/-/g, " ") : "All");
+
+  const activeSubcategory = activeCategory?.subcategories.find(s => s.slug === subcategoryParam) ||
+    activeCategory?.subcategories.find(s => s.name.toLowerCase().replace(/ /g, "-") === subcategoryParam);
+
+  const currentSubcategory = activeSubcategory ? activeSubcategory.name : (subcategoryParam ? subcategoryParam.replace(/-/g, " ") : null);
+
+  const categorySlug = activeCategory?.slug || categoryParam;
+  const subcategorySlug = activeSubcategory?.slug || subcategoryParam;
 
   // Filter products based on category, subcategory, and other filters
   const filteredProducts = useMemo(() => {
     return allProducts
       .filter((product) => {
         // Category Filter
-        if (
-          currentCategory !== "All" &&
-          product.category.toLowerCase() !== currentCategory.toLowerCase()
-        ) {
-          return false;
+        if (currentCategory !== "All") {
+          const productCategory = product.category.toLowerCase();
+          const targetCategory = currentCategory.toLowerCase();
+          const targetSlug = categorySlug?.toLowerCase();
+
+          if (productCategory !== targetCategory && productCategory !== targetSlug) {
+            return false;
+          }
         }
 
         // Subcategory Filter
-        if (
-          currentSubcategory &&
-          product.subcategory.toLowerCase() !== currentSubcategory.toLowerCase()
-        ) {
-          return false;
+        if (currentSubcategory) {
+          const productSubcat = product.subcategory.toLowerCase();
+          const targetSubcat = currentSubcategory.toLowerCase();
+          const targetSubSlug = subcategorySlug?.toLowerCase();
+
+          if (productSubcat !== targetSubcat && productSubcat !== targetSubSlug) {
+            return false;
+          }
         }
 
         // Price Filter
@@ -106,11 +124,18 @@ const Category = () => {
         }
 
         // Search Filter
-        if (
-          searchQuery &&
-          !product.name.toLowerCase().includes(searchQuery.toLowerCase())
-        ) {
-          return false;
+        // Search Filter (Multi-keyword)
+        if (searchQuery) {
+          const searchTokens = searchQuery.toLowerCase().split(/[\s-]+/).filter(Boolean);
+          const productText = `
+            ${product.name} 
+            ${product.category} 
+            ${product.subcategory || ""}
+          `.toLowerCase();
+
+          // Check if EVERY token in the search query exists in the product text
+          const matches = searchTokens.every(token => productText.includes(token));
+          if (!matches) return false;
         }
 
         return true;
@@ -129,6 +154,7 @@ const Category = () => {
     selectedGenders,
     sortBy,
     searchQuery,
+    allProducts,
   ]);
 
   // Data Options
@@ -429,42 +455,39 @@ const Category = () => {
                     )}
                   </Link>
                 </li>
-                {categoryData.map((cat) => (
-                  <li key={cat.name}>
+                {categories.map((cat) => (
+                  <li key={cat.id || cat.slug}>
                     <Link
-                      to={`/shop/${cat.name.toLowerCase().replace(/ /g, "-")}`}
-                      className={`w-full text-left flex items-center justify-between group ${currentCategory.toLowerCase() === cat.name.toLowerCase()
+                      to={`/shop/${cat.slug}`}
+                      className={`w-full text-left flex items-center justify-between group ${categorySlug === cat.slug
                         ? "text-pink-500 font-bold"
                         : "text-gray-600 hover:text-pink-500"
                         }`}
                     >
                       <span>{cat.name}</span>
-                      {currentCategory.toLowerCase() ===
-                        cat.name.toLowerCase() && (
-                          <div className="w-1.5 h-1.5 rounded-full bg-pink-500"></div>
-                        )}
+                      {categorySlug === cat.slug && (
+                        <div className="w-1.5 h-1.5 rounded-full bg-pink-500"></div>
+                      )}
                     </Link>
 
                     {/* Subcategories if active */}
-                    {currentCategory.toLowerCase() ===
-                      cat.name.toLowerCase() && (
-                        <ul className="ml-4 mt-2 space-y-2 border-l-2 border-pink-100 pl-4">
-                          {cat.subcategories.map((sub) => (
-                            <li key={sub}>
-                              <Link
-                                to={`/shop/${cat.name.toLowerCase().replace(/ /g, "-")}/${sub.toLowerCase().replace(/ /g, "-")}`}
-                                className={`text-sm block ${currentSubcategory?.toLowerCase() ===
-                                  sub.toLowerCase()
-                                  ? "text-pink-500 font-bold"
-                                  : "text-gray-500 hover:text-pink-500"
-                                  }`}
-                              >
-                                {sub}
-                              </Link>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
+                    {categorySlug === cat.slug && (
+                      <ul className="ml-4 mt-2 space-y-2 border-l-2 border-pink-100 pl-4">
+                        {cat.subcategories.map((sub) => (
+                          <li key={sub.slug}>
+                            <Link
+                              to={`/shop/${cat.slug}/${sub.slug}`}
+                              className={`text-sm block ${subcategorySlug === sub.slug
+                                ? "text-pink-500 font-bold"
+                                : "text-gray-500 hover:text-pink-500"
+                                }`}
+                            >
+                              {sub.name}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </li>
                 ))}
               </ul>
