@@ -32,7 +32,7 @@ const CategorySelection = () => {
               <img
                 src={category.image || "/cat_images/newborn_essentials.png"}
                 alt={category.name}
-                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                className="absolute inset-0 w-full h-full object-contain transition-transform duration-700 group-hover:scale-110"
               />
 
               <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-colors duration-500" />

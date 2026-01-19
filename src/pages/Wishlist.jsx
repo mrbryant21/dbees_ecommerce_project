@@ -3,7 +3,7 @@ import { useCart } from "../context/CartContext";
 import { X, ShoppingBag } from "lucide-react";
 
 const Wishlist = () => {
-  const { wishlist, toggleWishlist } = useCart();
+  const { wishlist, toggleWishlist, addToCart } = useCart();
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -45,8 +45,11 @@ const Wishlist = () => {
                 <h3 className="text-lg font-semibold text-slate-800">
                   {product.name}
                 </h3>
-                <p className="text-slate-500 mt-1">${product.price}</p>
-                <button className="mt-4 w-full bg-slate-800 text-white px-4 py-2 rounded-lg font-semibold hover:bg-slate-900 transition flex items-center justify-center gap-2">
+                <p className="text-slate-500 mt-1">GHS{product.price}</p>
+                <button
+                  onClick={() => addToCart(product)}
+                  className="mt-4 w-full bg-slate-800 text-white px-4 py-2 rounded-lg font-semibold hover:bg-slate-900 transition flex items-center justify-center gap-2"
+                >
                   <ShoppingBag size={18} />
                   Add to Cart
                 </button>

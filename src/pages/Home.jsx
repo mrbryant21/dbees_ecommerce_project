@@ -20,6 +20,7 @@ import NewArrivalsProducts from "../components/NewArrivalsProducts";
 import TestimonialCarousel from "../components/Testimonials";
 import { useCart } from "../context/CartContext";
 import { fetchProducts } from "../data/products";
+import { fetchCategories } from "../data/categories";
 import { SkeletonProductCard } from "../components/SkeletonLoader";
 
 const Home = () => {
@@ -27,25 +28,40 @@ const Home = () => {
   const { addToCart, toggleWishlist, isInWishlist } = useCart();
   const [currency, setCurrency] = useState("GH₵");
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadProducts = async () => {
-      const data = await fetchProducts();
-      setProducts(data);
+    const loadData = async () => {
+      const [productsData, categoriesData] = await Promise.all([
+        fetchProducts(),
+        fetchCategories()
+      ]);
+      setProducts(productsData);
+      setCategories(categoriesData);
       setLoading(false);
     };
-    loadProducts();
+    loadData();
   }, []);
 
-  const categories = [
-    { name: "Newborn Essentials", icon: "👶" },
-    { name: "Baby Clothing", icon: "👕" },
-    { name: "Toys & Play", icon: "🧸" },
-    { name: "Nursery Décor", icon: "🛏️" },
-    { name: "Feeding & Care", icon: "🍼" },
-    { name: "Bath & Skincare", icon: "🛁" },
-  ];
+  const getCategoryIcon = (slug) => {
+    const icons = {
+      "newborn-essentials": "👶",
+      "clothing": "👕",
+      "baby-clothing": "👕",
+      "toys": "🧸",
+      "toys-play": "🧸",
+      "nursery": "🛏️",
+      "nursery-decor": "🛏️",
+      "feeding": "🍼",
+      "feeding-care": "🍼",
+      "bath-skincare": "🛁",
+      "maternity-wear": "🤰",
+      "swings-bouncers": "🪑",
+      "footwear": "👟"
+    };
+    return icons[slug] || "📦";
+  };
 
   const featuredProducts = products.filter(p => p.badge === 'Featured' || p.isFeatured).slice(0, 4);
 
@@ -55,32 +71,6 @@ const Home = () => {
       maximumFractionDigits: 2,
     });
   };
-  const ShopCategories = [
-    {
-      name: "Newborn Essentials",
-      image: "/cat_images/newborn_essentials.png",
-    },
-    {
-      name: "Clothing",
-      image: "/cat_images/baby_clothing.jpeg",
-    },
-    {
-      name: "Toys & Play",
-      image: "/cat_images/toys_and_play.png",
-    },
-    {
-      name: "Nursery Decor",
-      image: "/cat_images/nursery_decor.png",
-    },
-    {
-      name: "Feeding & Care",
-      image: "/cat_images/feeding_and_care.png",
-    },
-    {
-      name: "Bath & Skincare",
-      image: "/cat_images/baby_and_skincare.png",
-    },
-  ];
 
   return (
     <div className="animate-fadeIn">
@@ -97,15 +87,11 @@ const Home = () => {
                 <nav className="space-y-2">
                   {categories.map((cat) => (
                     <button
-                      key={cat.name}
-                      onClick={() =>
-                        navigate(
-                          `/shop/${cat.name.toLowerCase().replace(/ & /g, "-").replace(/ /g, "-")}`,
-                        )
-                      }
-                      className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-babyPink transition text-left group cursor-pointer"
+                      key={cat.id || cat.slug}
+                      onClick={() => navigate(`/shop/${cat.slug}`)}
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-pink-50 transition text-left group cursor-pointer"
                     >
-                      <span className="text-2xl">{cat.icon}</span>
+                      <span className="text-2xl">{getCategoryIcon(cat.slug)}</span>
                       <span className="text-sm font-medium text-slate-700 group-hover:text-slate-900">
                         {cat.name}
                       </span>
@@ -273,8 +259,10 @@ const Home = () => {
                   </div>
                 </div>
               ))
+
             )}
           </div>
+
         </div>
       </section>
 
