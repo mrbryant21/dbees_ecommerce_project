@@ -21,6 +21,7 @@ import { auth, db } from "../config/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import toast from "react-hot-toast";
+import { PaystackButton } from "react-paystack";
 
 const CartAndCheckout = () => {
   const { cart, removeFromCart, updateQuantity, subtotal, clearCart } = useCart();
@@ -32,6 +33,9 @@ const CartAndCheckout = () => {
   const [paymentMethod, setPaymentMethod] = useState("card"); // card, momo, cod, whatsapp
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [momoNumber, setMomoNumber] = useState("");
+
+
 
   // Form State
   const [contactInfo, setContactInfo] = useState({
@@ -77,6 +81,32 @@ const CartAndCheckout = () => {
   const shipping = 50.0;
   const total = subtotal + shipping;
 
+  // Paystack Configuration
+  const paystackConfig = {
+    reference: new Date().getTime().toString(),
+    email: contactInfo.email || "customer@example.com",
+    amount: Math.round(total * 100), // Paystack expects amount in pesewas (kobo)
+    publicKey: "pk_test_1e713dbcec56e95cfc22a62d968ce1cc2e1ce08e", // Replace with your Paystack public key
+    currency: "GHS",
+    channels: paymentMethod === "momo"
+      ? ["mobile_money"]
+      : ["card"],
+    metadata: {
+      custom_fields: [
+        {
+          display_name: "Customer Name",
+          variable_name: "customer_name",
+          value: `${shippingAddress.firstName} ${shippingAddress.lastName}`
+        },
+        {
+          display_name: "Phone Number",
+          variable_name: "phone_number",
+          value: contactInfo.phone || momoNumber
+        }
+      ]
+    }
+  };
+
   const formatPrice = (price) =>
     price.toLocaleString(undefined, { minimumFractionDigits: 2 });
 
@@ -87,7 +117,72 @@ const CartAndCheckout = () => {
     return `ORD-${timestamp}-${random}`;
   };
 
-  // Handle Order Submission
+  // Handle Paystack Payment Success
+  const handlePaystackSuccess = async (reference) => {
+    console.log("Payment successful!", reference);
+    toast.success("Payment successful!");
+
+    // Save order with payment reference
+    await saveOrder(reference.reference, "paid");
+  };
+
+  // Handle Paystack Payment Close
+  const handlePaystackClose = () => {
+    toast.error("Payment cancelled");
+  };
+
+  // Save Order to Firestore
+  const saveOrder = async (paymentReference = null, orderStatus = "pending") => {
+    const orderId = generateOrderId();
+
+    // Filter out unnecessary fields from items
+    const sanitizeCartItem = (item) => {
+      const {
+        description, thumbnails, badge, category, gender, isDraft, isFeatured,
+        metaDescription, metaTitle, subcategory, shortDescription, reviews, rating,
+        ...rest
+      } = item;
+      return rest;
+    };
+
+    const orderData = {
+      orderId,
+      items: cart.map(sanitizeCartItem),
+      subtotal,
+      shipping,
+      total,
+      currency,
+      status: orderStatus,
+      paymentReference,
+      createdAt: serverTimestamp(),
+      contactInfo: {
+        email: contactInfo.email,
+        phone: contactInfo.phone,
+      },
+      shippingAddress,
+      paymentMethod,
+      userId: user ? user.uid : null,
+      isGuest: !user,
+    };
+
+    // Determine Collection
+    let collectionName = "guestOrders";
+    if (paymentMethod === "whatsapp") {
+      collectionName = "whatsappOrders";
+      orderData.status = "whatsapp_initiated";
+    } else if (user) {
+      collectionName = "orders";
+    }
+
+    // Save to Firestore
+    await setDoc(doc(db, collectionName, orderId), orderData);
+
+    // Clear cart and redirect
+    clearCart();
+    navigate("/order-success", { state: { orderId, total, currency } });
+  };
+
+  // Handle Order Submission (for COD and WhatsApp)
   const handlePlaceOrder = async () => {
     // Basic Validation
     if (step === 3) {
@@ -101,55 +196,61 @@ const CartAndCheckout = () => {
         setStep(2);
         return;
       }
+
+      // Validate mobile money number if momo is selected
+      if (paymentMethod === "momo" && !momoNumber) {
+        toast.error("Please enter your mobile money number");
+        return;
+      }
+    }
+
+    // For card and momo, Paystack button will handle the payment
+    if (paymentMethod === "card" || paymentMethod === "momo") {
+      // Validation only - actual payment handled by PaystackButton
+      if (!contactInfo.email) {
+        toast.error("Email is required for payment");
+        setStep(2);
+        return;
+      }
+      return; // PaystackButton will trigger payment
     }
 
     setLoading(true);
 
     try {
-      const orderId = generateOrderId();
-      // Filter out unnecessary fields from items
-      const sanitizeCartItem = (item) => {
-        const {
-          description, thumbnails, badge, category, gender, isDraft, isFeatured,
-          metaDescription, metaTitle, subcategory, shortDescription, reviews, rating,
-          ...rest
-        } = item;
-        return rest;
-      };
-
-      const orderData = {
-        orderId,
-        items: cart.map(sanitizeCartItem),
-        subtotal,
-        shipping,
-        total,
-        currency,
-        status: "pending",
-        createdAt: serverTimestamp(),
-        contactInfo: {
-          email: contactInfo.email,
-          phone: contactInfo.phone,
-        },
-        shippingAddress,
-        paymentMethod,
-        userId: user ? user.uid : null, // Link to user if auth
-        isGuest: !user,
-      };
-
-      // Determine Collection
-      let collectionName = "guestOrders";
-      if (paymentMethod === "whatsapp") {
-        collectionName = "whatsappOrders";
-        orderData.status = "whatsapp_initiated";
-      } else if (user) {
-        collectionName = "orders";
-      }
-
-      // Save to Firestore
-      await setDoc(doc(db, collectionName, orderId), orderData);
-
       // Handle WhatsApp Redirect
       if (paymentMethod === "whatsapp") {
+        const orderId = generateOrderId();
+        const sanitizeCartItem = (item) => {
+          const {
+            description, thumbnails, badge, category, gender, isDraft, isFeatured,
+            metaDescription, metaTitle, subcategory, shortDescription, reviews, rating,
+            ...rest
+          } = item;
+          return rest;
+        };
+
+        const orderData = {
+          orderId,
+          items: cart.map(sanitizeCartItem),
+          subtotal,
+          shipping,
+          total,
+          currency,
+          status: "whatsapp_initiated",
+          createdAt: serverTimestamp(),
+          contactInfo: {
+            email: contactInfo.email,
+            phone: contactInfo.phone,
+          },
+          shippingAddress,
+          paymentMethod,
+          userId: user ? user.uid : null,
+          isGuest: !user,
+        };
+
+        await setDoc(doc(db, "whatsappOrders", orderId), orderData);
+
         const itemsList = cart
           .map(
             (item, index) =>
@@ -191,10 +292,12 @@ Please confirm this order and provide payment instructions. Thank you! 🙏`;
         window.open(whatsappUrl, "_blank");
       }
 
-      // Success Actions
-      clearCart();
+      // Handle COD
+      if (paymentMethod === "cod") {
+        await saveOrder(null, "pending");
+      }
+
       toast.success("Order placed successfully!");
-      navigate("/order-success", { state: { orderId, total, currency } });
 
     } catch (error) {
       console.error("Order Error:", error);
@@ -628,6 +731,8 @@ Please confirm this order and provide payment instructions. Thank you! 🙏`;
                     <input
                       type="tel"
                       placeholder="024 XXX XXXX"
+                      value={momoNumber}
+                      onChange={(e) => setMomoNumber(e.target.value)}
                       className="w-full text-sm p-3 border border-gray-200 rounded-lg focus:outline-none focus:border-pink-500"
                     />
                   </div>
@@ -681,24 +786,35 @@ Please confirm this order and provide payment instructions. Thank you! 🙏`;
                 </button>
               )}
 
-              <button
-                disabled={loading}
-                onClick={() => {
-                  if (step === 1) navigate("/checkout");
-                  else if (step === 2) setStep(3); // Go to Payment
-                  else handlePlaceOrder(); // Final Submit
-                }}
-                className={`bg-gray-900 text-white text-sm font-bold px-8 py-3 rounded-full shadow-lg hover:bg-pink-600 transition-all flex items-center gap-2 cursor-pointer ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
-              >
-                {loading ? "Processing..." : (
-                  step === 3
-                    ? (paymentMethod === "cod" || paymentMethod === "whatsapp")
-                      ? "Place Order"
-                      : "Pay Now"
-                    : "Proceed to Checkout"
-                )}
-                {!loading && <ChevronRight size={16} />}
-              </button>
+              {(paymentMethod === "card" || paymentMethod === "momo") && step === 3 ? (
+                <PaystackButton
+                  {...paystackConfig}
+                  text={loading ? "Processing..." : "Pay Now"}
+                  onSuccess={handlePaystackSuccess}
+                  onClose={handlePaystackClose}
+                  disabled={loading || !contactInfo.email}
+                  className={`bg-gray-900 text-white text-sm font-bold px-8 py-3 rounded-full shadow-lg hover:bg-pink-600 transition-all flex items-center gap-2 cursor-pointer ${loading || !contactInfo.email ? 'opacity-50 cursor-not-allowed' : ''}`}
+                />
+              ) : (
+                <button
+                  disabled={loading}
+                  onClick={() => {
+                    if (step === 1) navigate("/checkout");
+                    else if (step === 2) setStep(3); // Go to Payment
+                    else handlePlaceOrder(); // Final Submit
+                  }}
+                  className={`bg-gray-900 text-white text-sm font-bold px-8 py-3 rounded-full shadow-lg hover:bg-pink-600 transition-all flex items-center gap-2 cursor-pointer ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  {loading ? "Processing..." : (
+                    step === 3
+                      ? (paymentMethod === "cod" || paymentMethod === "whatsapp")
+                        ? "Place Order"
+                        : "Pay Now"
+                      : "Proceed to Checkout"
+                  )}
+                  {!loading && <ChevronRight size={16} />}
+                </button>
+              )}
             </div>
           </div>
 

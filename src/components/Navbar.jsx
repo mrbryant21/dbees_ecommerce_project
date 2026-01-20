@@ -11,6 +11,8 @@ import {
   Gift,
   ChevronRight,
 } from "lucide-react";
+import { auth } from "../config/firebase";
+import { onAuthStateChanged } from "firebase/auth";
 import { categories as fallbackCategories, fetchCategories } from "../data/categories";
 import { useCart } from "../context/CartContext";
 
@@ -22,7 +24,16 @@ const Navbar = () => {
   const [activeMenu, setActiveMenu] = useState(null); // Tracks which menu is open
   const [mobileSubMenu, setMobileSubMenu] = useState(null); // Tracks which mobile sub-menu is open
   const [categories, setCategories] = useState(fallbackCategories);
+  const [user, setUser] = useState(null);
   const navigate = useNavigate();
+
+  // Auth Listener
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -95,6 +106,13 @@ const Navbar = () => {
   // Fixed lists for Gender and Age (Shared across all tabs)
   const genders = ["Baby Boy", "Baby Girl", "Unisex / Neutral"];
   const ages = ["0 - 9 Months", "3 - 24 Months", "1 - 6 Years"];
+
+  const getInitials = (name) => {
+    if (!name) return "";
+    const parts = name.split(" ");
+    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+    return name[0].toUpperCase();
+  };
 
   return (
     <nav
@@ -192,9 +210,19 @@ const Navbar = () => {
             <Link
               to="/profile"
               onClick={() => setActiveMenu(null)}
-              className="p-2.5 text-slate-700 hover:text-pink-500 hover:bg-pink-50 rounded-lg transition hidden sm:block"
+              className="p-2 text-slate-700 hover:text-pink-500 hover:bg-pink-50 rounded-lg transition hidden sm:block"
             >
-              <User size={20} />
+              {user ? (
+                <div className="w-9 h-9 bg-pink-500 text-white rounded-full flex items-center justify-center text-sm font-bold shadow-sm hover:bg-pink-600 transition-colors">
+                  {user.photoURL ? (
+                    <img src={user.photoURL} alt="User" className="w-full h-full rounded-full object-cover" />
+                  ) : (
+                    getInitials(user.displayName || user.email)
+                  )}
+                </div>
+              ) : (
+                <User size={20} />
+              )}
             </Link>
 
             <Link
@@ -523,19 +551,31 @@ const Navbar = () => {
         {/* Mobile Menu Footer */}
         <div className="p-6 border-t border-slate-100 bg-slate-50">
           <div className="flex items-center gap-4 mb-6">
-            <div className="w-12 h-12 rounded-full bg-pink-100 flex items-center justify-center text-pink-600">
-              <User size={24} />
+            <div className="w-12 h-12 rounded-full shadow-sm flex items-center justify-center overflow-hidden">
+              {user ? (
+                <div className="w-full h-full bg-pink-500 text-white flex items-center justify-center text-lg font-bold">
+                  {user.photoURL ? (
+                    <img src={user.photoURL} alt="User" className="w-full h-full object-cover" />
+                  ) : (
+                    getInitials(user.displayName || user.email)
+                  )}
+                </div>
+              ) : (
+                <div className="w-full h-full bg-pink-100 text-pink-600 flex items-center justify-center">
+                  <User size={24} />
+                </div>
+              )}
             </div>
             <div>
-              <p className="text-sm font-bold text-slate-900">
-                Welcome to D'Bees
+              <p className="text-sm font-bold text-slate-900 line-clamp-1">
+                {user ? `Hi, ${user.displayName || user.email.split('@')[0]}` : "Welcome to D'Bees"}
               </p>
               <Link
-                to="/auth"
+                to={user ? "/profile" : "/auth"}
                 className="text-xs text-pink-500 font-semibold hover:underline"
                 onClick={() => setIsOpen(false)}
               >
-                Login or Register
+                {user ? "View Profile" : "Login or Register"}
               </Link>
             </div>
           </div>
